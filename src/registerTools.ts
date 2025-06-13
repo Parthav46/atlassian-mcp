@@ -3,50 +3,54 @@ import { ConfluenceClient } from "./confluenceClient";
 import { JiraClient } from "./jiraClient";
 
 // Helper to get config from extra.request.headers
-function getConfigFromExtra(extra: any) {
-  const headers = (extra?.request?.headers || {}) as Record<string, string>;
-  const baseUrl = headers['x-confluence-base-url'] || process.env.CONFLUENCE_BASE_URL || '';
+function getAtlassianConfig(_extra: any) {
+  // Use --base-url, --user-token, --username for both
+  let baseUrl = '';
   let userToken = '';
-  const authHeader = headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    userToken = authHeader.replace('Bearer ', '').trim();
-  } else if (headers['x-confluence-token']) {
-    userToken = headers['x-confluence-token'];
-  } else if (process.env.CONFLUENCE_USER_TOKEN) {
-    userToken = process.env.CONFLUENCE_USER_TOKEN;
+  let username = '';
+  for (let i = 0; i < process.argv.length; i++) {
+    if (process.argv[i] === '--base-url' && process.argv[i + 1]) {
+      baseUrl = process.argv[i + 1];
+    }
+    if (process.argv[i] === '--user-token' && process.argv[i + 1]) {
+      userToken = process.argv[i + 1];
+    }
+    if (process.argv[i] === '--username' && process.argv[i + 1]) {
+      username = process.argv[i + 1];
+    }
   }
-  return { baseUrl, userToken };
-}
-
-function getJiraConfigFromExtra(extra: any) {
-  const headers = (extra?.request?.headers || {}) as Record<string, string>;
-  const baseUrl = headers['x-jira-base-url'] || process.env.JIRA_BASE_URL || '';
-  let userToken = '';
-  const authHeader = headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    userToken = authHeader.replace('Bearer ', '').trim();
-  } else if (headers['x-jira-token']) {
-    userToken = headers['x-jira-token'];
-  } else if (process.env.JIRA_USER_TOKEN) {
-    userToken = process.env.JIRA_USER_TOKEN;
-  }
-  return { baseUrl, userToken };
+  if (!baseUrl) baseUrl = process.env.BASE_URL || '';
+  if (!userToken) userToken = process.env.USER_TOKEN || '';
+  if (!username) username = process.env.USERNAME || '';
+  return { baseUrl, userToken, username };
 }
 
 export function registerTools(server: any) {
   // Confluence tools
   server.tool(
     "get-page",
-    "Get a Confluence page by ID",
-    { pageId: z.string().describe("Confluence page ID") },
+    "Get a Confluence page by ID (optionally specify content format: storage or markdown)",
+    { pageId: z.string().describe("Confluence page ID"), bodyFormat: z.enum(["storage", "markdown"]).optional().describe("Content format: storage (default) or markdown") },
     async (
-      { pageId }: { pageId: string },
+      { pageId, bodyFormat }: { pageId: string; bodyFormat?: "storage" | "markdown" },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
-      const response = await client.getPage(pageId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const format = bodyFormat || "storage";
+      const response = await client.getPage(pageId, format);
+      const page = response.data;
+      let content = "";
+      if (format === "markdown") {
+        content = page.body?.atlas_doc_format?.value || "No markdown content found.";
+      } else {
+        content = page.body?.storage?.value || "No storage content found.";
+      }
+      return {
+        content: [
+          { type: "text", text: `Title: ${page.title}\nPage ID: ${page.id}\nFormat: ${format}\n---\n${content}` }
+        ]
+      };
     }
   );
 
@@ -58,7 +62,7 @@ export function registerTools(server: any) {
       { pageId, data }: { pageId: string; data: any },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.updatePage(pageId, data);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -73,7 +77,7 @@ export function registerTools(server: any) {
       { pageId }: { pageId: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -88,7 +92,7 @@ export function registerTools(server: any) {
       { folderId }: { folderId: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.getFolder(folderId);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -103,7 +107,7 @@ export function registerTools(server: any) {
       { spaceId }: { spaceId: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.getSpace(spaceId);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -118,7 +122,7 @@ export function registerTools(server: any) {
       { start, limit }: { start?: number; limit?: number },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.listSpaces(start, limit);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -133,7 +137,7 @@ export function registerTools(server: any) {
       { spaceId, title, body, parentId }: { spaceId: string; title: string; body: string; parentId?: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.createPage(spaceId, title, body, parentId);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -148,7 +152,7 @@ export function registerTools(server: any) {
       { pageId }: { pageId: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.deletePage(pageId);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -163,10 +167,70 @@ export function registerTools(server: any) {
       { title }: { title: string },
       extra: any
     ) => {
-      const config = getConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new ConfluenceClient(config);
       const response = await client.searchPagesByTitle(title);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const results = response.data.results || response.data.pageResults || [];
+      if (!results.length) {
+        return { content: [{ type: "text", text: "No pages found." }] };
+      }
+      const summary = results.map((page: any) => {
+        const id = page.id;
+        const pageTitle = page.title || "Untitled";
+        const url = `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${id}`;
+        return `- [${pageTitle}] (ID: ${id}) ${url}`;
+      }).join("\n");
+      return { content: [{ type: "text", text: `Confluence pages found:\n${summary}` }] };
+    }
+  );
+
+  server.tool(
+    "get-pages-from-space",
+    "Get pages from a Confluence space (v2 API)",
+    { spaceId: z.string().describe("Confluence space ID"), limit: z.number().optional().describe("Page size limit"), cursor: z.string().optional().describe("Pagination cursor") },
+    async (
+      { spaceId, limit, cursor }: { spaceId: string; limit?: number; cursor?: string },
+      extra: any
+    ) => {
+      const config = getAtlassianConfig(extra);
+      const client = new ConfluenceClient(config);
+      const response = await client.getPagesFromSpace(spaceId, limit, cursor);
+      const results = response.data.results || [];
+      if (!results.length) {
+        return { content: [{ type: "text", text: "No pages found in this space." }] };
+      }
+      const summary = results.map((page: any) => {
+        const id = page.id;
+        const pageTitle = page.title || "Untitled";
+        const url = `${config.baseUrl}/spaces/${spaceId}/pages/${id}`;
+        return `- [${pageTitle}] (ID: ${id}) ${url}`;
+      }).join("\n");
+      return { content: [{ type: "text", text: `Pages in space '${spaceId}':\n${summary}` }] };
+    }
+  );
+
+  server.tool(
+    "confluence_search",
+    "Advanced Confluence search using CQL (Confluence Query Language)",
+    { cql: z.string().describe("CQL query string"), limit: z.number().optional(), start: z.number().optional() },
+    async (
+      { cql, limit, start }: { cql: string; limit?: number; start?: number },
+      extra: any
+    ) => {
+      const config = getAtlassianConfig(extra);
+      const client = new ConfluenceClient(config);
+      const response = await client.searchWithCql(cql, limit, start);
+      const results = response.data.results || [];
+      if (!results.length) {
+        return { content: [{ type: "text", text: "No pages found for this CQL query." }] };
+      }
+      const summary = results.map((page: any) => {
+        const id = page.id;
+        const pageTitle = page.title || "Untitled";
+        const url = `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${id}`;
+        return `- [${pageTitle}] (ID: ${id}) ${url}`;
+      }).join("\n");
+      return { content: [{ type: "text", text: `Confluence search results:\n${summary}` }] };
     }
   );
 
@@ -179,7 +243,7 @@ export function registerTools(server: any) {
       { issueKey }: { issueKey: string },
       extra: any
     ) => {
-      const config = getJiraConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new JiraClient(config);
       const response = await client.getIssue(issueKey);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -194,10 +258,22 @@ export function registerTools(server: any) {
       { jql, startAt, maxResults }: { jql: string; startAt?: number; maxResults?: number },
       extra: any
     ) => {
-      const config = getJiraConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new JiraClient(config);
       const response = await client.searchIssues(jql, startAt, maxResults);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      // Summarize issues for LLM
+      const issues = response.data.issues || [];
+      if (issues.length === 0) {
+        return { content: [{ type: "text", text: "No issues found." }] };
+      }
+      const summary = issues.map((issue: any) => {
+        const key = issue.key;
+        const summary = issue.fields?.summary || "";
+        const status = issue.fields?.status?.name || "";
+        const assignee = issue.fields?.assignee?.displayName || "Unassigned";
+        return `- [${key}] ${summary} (Status: ${status}, Assignee: ${assignee})`;
+      }).join("\n");
+      return { content: [{ type: "text", text: `Jira issues found:\n${summary}` }] };
     }
   );
 
@@ -209,7 +285,7 @@ export function registerTools(server: any) {
       { issueData }: { issueData: any },
       extra: any
     ) => {
-      const config = getJiraConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new JiraClient(config);
       const response = await client.createIssue(issueData);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -224,7 +300,7 @@ export function registerTools(server: any) {
       { issueKey, issueData }: { issueKey: string; issueData: any },
       extra: any
     ) => {
-      const config = getJiraConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new JiraClient(config);
       const response = await client.updateIssue(issueKey, issueData);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
@@ -239,7 +315,7 @@ export function registerTools(server: any) {
       { issueKey }: { issueKey: string },
       extra: any
     ) => {
-      const config = getJiraConfigFromExtra(extra);
+      const config = getAtlassianConfig(extra);
       const client = new JiraClient(config);
       const response = await client.deleteIssue(issueKey);
       return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };

@@ -3,10 +3,6 @@ dotenv.config();
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { getConfluenceConfig } from "../config/confluence";
-import { ConfluenceClient } from "./confluenceClient";
-import { JiraClient } from "./jiraClient";
 import { registerTools } from "./registerTools.js";
 
 const server = new McpServer({
@@ -17,38 +13,6 @@ const server = new McpServer({
     tools: {},
   },
 });
-
-// Helper to get config from extra.request.headers
-function getConfigFromExtra(extra: any) {
-  const headers = (extra?.request?.headers || {}) as Record<string, string>;
-  const baseUrl = headers['x-confluence-base-url'] || process.env.CONFLUENCE_BASE_URL || '';
-  let userToken = '';
-  const authHeader = headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    userToken = authHeader.replace('Bearer ', '').trim();
-  } else if (headers['x-confluence-token']) {
-    userToken = headers['x-confluence-token'];
-  } else if (process.env.CONFLUENCE_USER_TOKEN) {
-    userToken = process.env.CONFLUENCE_USER_TOKEN;
-  }
-  return { baseUrl, userToken };
-}
-
-// Helper to get Jira config from extra.request.headers
-function getJiraConfigFromExtra(extra: any) {
-  const headers = (extra?.request?.headers || {}) as Record<string, string>;
-  const baseUrl = headers['x-jira-base-url'] || process.env.JIRA_BASE_URL || '';
-  let userToken = '';
-  const authHeader = headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    userToken = authHeader.replace('Bearer ', '').trim();
-  } else if (headers['x-jira-token']) {
-    userToken = headers['x-jira-token'];
-  } else if (process.env.JIRA_USER_TOKEN) {
-    userToken = process.env.JIRA_USER_TOKEN;
-  }
-  return { baseUrl, userToken };
-}
 
 registerTools(server);
 

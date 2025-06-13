@@ -1,23 +1,65 @@
 import axios, { AxiosInstance } from 'axios';
-import { ConfluenceConfig } from '../config/confluence';
+
+export interface ConfluenceConfig {
+  baseUrl: string;
+  userToken: string;
+  username: string;
+}
 
 export class ConfluenceClient {
   private axios: AxiosInstance;
 
   constructor(config: ConfluenceConfig) {
+    const authString = Buffer.from(`${config.username}:${config.userToken}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
       headers: {
-        'Authorization': `Bearer ${config.userToken}`,
+        'Authorization': `Basic ${authString}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
     });
+
+    // Add request logging
+    this.axios.interceptors.request.use((request) => {
+      const url = (request.baseURL || '') + request.url;
+      let dataPreview = '';
+      if (typeof request.data === 'string') {
+        dataPreview = request.data.slice(0, 100);
+      } else if (typeof request.data === 'object' && request.data !== null) {
+        dataPreview = JSON.stringify(request.data).slice(0, 100);
+      }
+      console.log('[Confluence API Request]', {
+        url,
+        method: request.method,
+        headers: request.headers,
+        dataPreview,
+      });
+      return request;
+    });
+
+    // Add response logging
+    this.axios.interceptors.response.use((response) => {
+      let dataPreview = '';
+      if (typeof response.data === 'string') {
+        dataPreview = response.data.slice(0, 100);
+      } else if (typeof response.data === 'object' && response.data !== null) {
+        dataPreview = JSON.stringify(response.data).slice(0, 100);
+      }
+      console.log('[Confluence API Response]', {
+        url: (response.config.baseURL || '') + response.config.url,
+        status: response.status,
+        dataPreview,
+      });
+      return response;
+    });
   }
 
-  // Get a page by ID
-  async getPage(pageId: string) {
-    return this.axios.get(`/wiki/api/v2/pages/${pageId}`);
+  // Get a page by ID (with body, support for storage and markdown)
+  async getPage(pageId: string, bodyFormat: 'storage' | 'markdown' = 'storage') {
+    // v2 API: use body-format param. For markdown, use 'atlas_doc_format' and convert to markdown if needed.
+    const params: any = { 'body-format': bodyFormat === 'markdown' ? 'atlas_doc_format' : 'storage' };
+    return this.axios.get(`/wiki/api/v2/pages/${pageId}`, { params });
   }
 
   // Update a page by ID
@@ -68,6 +110,23 @@ export class ConfluenceClient {
 
   // Search pages by title
   async searchPagesByTitle(title: string) {
-    return this.axios.get(`/wiki/api/v2/pages`, { params: { title } });
+    // Use the widely supported Confluence Cloud REST API endpoint
+    return this.axios.get(`/wiki/rest/api/content`, { params: { title } });
+  }
+
+  // Get pages from a space (Confluence v2 API)
+  async getPagesFromSpace(spaceId: string, limit?: number, cursor?: string) {
+    const params: any = {};
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    return this.axios.get(`/wiki/api/v2/spaces/${spaceId}/pages`, { params });
+  }
+
+  // Advanced search using CQL
+  async searchWithCql(cql: string, limit?: number, start?: number) {
+    const params: any = { cql };
+    if (limit !== undefined) params.limit = limit;
+    if (start !== undefined) params.start = start;
+    return this.axios.get(`/wiki/rest/api/content/search`, { params });
   }
 }
