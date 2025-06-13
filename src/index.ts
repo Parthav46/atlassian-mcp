@@ -16,8 +16,6 @@ const server = new McpServer({
 
 registerTools(server);
 
-console.error("DEBUG: Registered tools:", Object.keys(server.tool));
-
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

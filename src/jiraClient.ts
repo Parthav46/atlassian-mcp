@@ -20,39 +20,22 @@ export class JiraClient {
       },
     });
 
-    // Add request logging
-    this.axios.interceptors.request.use((request) => {
-      const url = (request.baseURL || '') + request.url;
-      let dataPreview = '';
-      if (typeof request.data === 'string') {
-        dataPreview = request.data.slice(0, 100);
-      } else if (typeof request.data === 'object' && request.data !== null) {
-        dataPreview = JSON.stringify(request.data).slice(0, 100);
+    // Add error logging
+    this.axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response) {
+          console.error('[Jira API Error]', {
+            url: error.config?.url,
+            status: error.response.status,
+            data: error.response.data,
+          });
+        } else {
+          console.error('[Jira API Error]', error.message);
+        }
+        return Promise.reject(error);
       }
-      console.log('[Jira API Request]', {
-        url,
-        method: request.method,
-        headers: request.headers,
-        dataPreview,
-      });
-      return request;
-    });
-
-    // Add response logging
-    this.axios.interceptors.response.use((response) => {
-      let dataPreview = '';
-      if (typeof response.data === 'string') {
-        dataPreview = response.data.slice(0, 100);
-      } else if (typeof response.data === 'object' && response.data !== null) {
-        dataPreview = JSON.stringify(response.data).slice(0, 100);
-      }
-      console.log('[Jira API Response]', {
-        url: (response.config.baseURL || '') + response.config.url,
-        status: response.status,
-        dataPreview,
-      });
-      return response;
-    });
+    );
   }
 
   // Get a Jira issue by key
