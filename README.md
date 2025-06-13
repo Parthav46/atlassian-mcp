@@ -1,12 +1,13 @@
 # Atlassian MCP Confluence Server
 
-This project implements a Model Context Protocol (MCP) server for interacting with Atlassian Confluence via LLMs. It is designed for extensibility (e.g., Jira integration) and supports multi-project Confluence access via request headers.
+This project implements a Model Context Protocol (MCP) server for interacting with Atlassian Confluence and Jira via LLMs. It is designed for extensibility and supports multi-project Confluence access via request headers.
 
 ## Features
 - Get, update, and explore Confluence pages, folders, children, and spaces
+- Perform advanced searches using CQL (Confluence Query Language)
+- Interact with Jira issues (create, update, delete, search)
 - Designed for LLM integration (e.g., Claude for Desktop)
 - Multi-project support via headers
-- Ready for future Jira extension
 
 ## Setup
 
@@ -16,14 +17,13 @@ This project implements a Model Context Protocol (MCP) server for interacting wi
    ```
 
 2. **Configure environment:**
-   - Copy `.env` and set optional defaults:
+   - Set optional defaults using node command arguments:
      ```
-     CONFLUENCE_BASE_URL=
-     CONFLUENCE_USER_TOKEN=
+     --base-url=<Confluence or Jira base URL>
+     --user-token=<User token>
+     --username=<Username>
      ```
-   - These can be overridden per request using headers:
-     - `X-Confluence-Base-Url`: Confluence instance base URL
-     - `Authorization: Bearer <token>` or `X-Confluence-Token`
+   - These arguments are passed when starting the server and override any environment variables.
 
 3. **Build the project:**
    ```sh
@@ -35,12 +35,18 @@ This project implements a Model Context Protocol (MCP) server for interacting wi
    npm start
    ```
 
+## Code Structure
+
+The project is modularized for better maintainability:
+- **src/registerTools.ts**: Delegates tool registration to modular files.
+- **src/registerJiraTools.ts**: Handles Jira-related tools.
+- **src/registerPageTools.ts**: Handles Confluence page-related tools.
+- **src/registerSpaceTools.ts**: Handles Confluence space-related tools.
+- **src/registerCqlTools.ts**: Handles advanced CQL search tools.
+
 ## Usage with Claude for Desktop
 - Add this server as an MCP server in your Claude for Desktop config.
-- The server communicates over stdio and exposes tools for Confluence operations.
-
-## Extending for Jira
-- Add new tools in `src/index.ts` and a Jira client in `src/`.
+- The server communicates over stdio and exposes tools for Confluence and Jira operations.
 
 ## Scripts
 - `npm run build` — Compile TypeScript
