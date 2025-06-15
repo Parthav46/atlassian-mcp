@@ -53,6 +53,65 @@ describe('registerSpaceTools', () => {
     expect(mockGetSpace).toHaveBeenCalledWith('S1');
   });
 
+  it('get-space handler handles missing description and plain/value', async () => {
+    const mockGetSpace = jest.fn().mockResolvedValue({
+      data: {
+        id: 'S2',
+        key: 'SPACE2',
+        name: 'Space 2',
+        description: undefined,
+      },
+    });
+    MockedConfluenceClient.prototype.getSpace = mockGetSpace;
+    registerSpaceTools(server, config);
+    const getSpaceCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-space');
+    const handler = getSpaceCall[3];
+    const result = await handler({ spaceId: 'S2' }, {});
+    expect(result).toEqual({
+      id: 'S2',
+      key: 'SPACE2',
+      name: 'Space 2',
+      url: 'https://example.atlassian.net/spaces/SPACE2',
+      description: undefined,
+    });
+
+    // missing plain
+    mockGetSpace.mockResolvedValueOnce({
+      data: {
+        id: 'S3',
+        key: 'SPACE3',
+        name: 'Space 3',
+        description: {},
+      },
+    });
+    const result2 = await handler({ spaceId: 'S3' }, {});
+    expect(result2).toEqual({
+      id: 'S3',
+      key: 'SPACE3',
+      name: 'Space 3',
+      url: 'https://example.atlassian.net/spaces/SPACE3',
+      description: undefined,
+    });
+
+    // missing value
+    mockGetSpace.mockResolvedValueOnce({
+      data: {
+        id: 'S4',
+        key: 'SPACE4',
+        name: 'Space 4',
+        description: { plain: {} },
+      },
+    });
+    const result3 = await handler({ spaceId: 'S4' }, {});
+    expect(result3).toEqual({
+      id: 'S4',
+      key: 'SPACE4',
+      name: 'Space 4',
+      url: 'https://example.atlassian.net/spaces/SPACE4',
+      description: undefined,
+    });
+  });
+
   it('get-folder handler returns expected data', async () => {
     const mockGetFolder = jest.fn().mockResolvedValue({
       data: { id: 'F1', name: 'Folder 1', description: 'desc' },
@@ -113,6 +172,16 @@ describe('registerSpaceTools', () => {
     expect(result).toEqual({ spaces: [] });
   });
 
+  it('list-spaces handler handles undefined results', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({ data: {} });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
+    registerSpaceTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    const handler = call[3];
+    const result = await handler({}, {});
+    expect(result).toEqual({ spaces: [] });
+  });
+
   it('get-pages-from-space handler returns expected data', async () => {
     const mockGetPagesFromSpace = jest.fn().mockResolvedValue({
       data: { results: [
@@ -134,8 +203,32 @@ describe('registerSpaceTools', () => {
     expect(mockGetPagesFromSpace).toHaveBeenCalledWith('SPACE', 2, undefined);
   });
 
+  it('get-pages-from-space handler handles missing title', async () => {
+    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({
+      data: { results: [ { id: 'P3' } ] },
+    });
+    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
+    registerSpaceTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
+    const handler = call[3];
+    const result = await handler({ spaceId: 'SPACE', limit: 1 }, {});
+    expect(result).toEqual({
+      pages: [ { id: 'P3', title: 'Untitled', url: 'https://example.atlassian.net/spaces/SPACE/pages/P3' } ],
+    });
+  });
+
   it('get-pages-from-space handler returns empty array if no results', async () => {
     const mockGetPagesFromSpace = jest.fn().mockResolvedValue({ data: { results: [] } });
+    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
+    registerSpaceTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
+    const handler = call[3];
+    const result = await handler({ spaceId: 'SPACE' }, {});
+    expect(result).toEqual({ pages: [] });
+  });
+
+  it('get-pages-from-space handler handles undefined results', async () => {
+    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({ data: {} });
     MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
     registerSpaceTools(server, config);
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');

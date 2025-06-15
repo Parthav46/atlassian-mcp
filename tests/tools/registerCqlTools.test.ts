@@ -58,4 +58,28 @@ describe('registerCqlTools', () => {
     const result = await handler({ cql: 'type=page', limit: 2, start: 0 }, {});
     expect(result).toEqual({ pages: [] });
   });
+
+  it('confluence_search handler handles missing title and space key', async () => {
+    const mockSearchWithCql = jest.fn().mockResolvedValue({
+      data: {
+        results: [
+          { id: '3' },
+          { id: '4', title: undefined, space: {} },
+          { id: '5', title: '', space: undefined },
+        ],
+      },
+    });
+    MockedConfluenceClient.prototype.searchWithCql = mockSearchWithCql;
+    registerCqlTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'confluence_search');
+    const handler = call[3];
+    const result = await handler({ cql: 'type=page' }, {});
+    expect(result).toEqual({
+      pages: [
+        { id: '3', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/3' },
+        { id: '4', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/4' },
+        { id: '5', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/5' },
+      ],
+    });
+  });
 });

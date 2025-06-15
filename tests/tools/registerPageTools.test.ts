@@ -94,6 +94,30 @@ describe('registerPageTools', () => {
     });
   });
 
+  it('get-page handler handles missing storage and markdown fields', async () => {
+    const mockGetPage = jest.fn().mockResolvedValue({
+      data: { id: '124', title: 'No Body', body: {} },
+    });
+    MockedConfluenceClient.prototype.getPage = mockGetPage;
+    registerPageTools(server, config);
+    const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
+    const handler = getPageCall[3];
+    const resultStorage = await handler({ pageId: '124', bodyFormat: 'storage' }, {});
+    expect(resultStorage).toEqual({
+      id: '124',
+      title: 'No Body',
+      url: 'https://example.atlassian.net/pages/124',
+      content: '',
+    });
+    const resultMarkdown = await handler({ pageId: '124', bodyFormat: 'markdown' }, {});
+    expect(resultMarkdown).toEqual({
+      id: '124',
+      title: 'No Body',
+      url: 'https://example.atlassian.net/pages/124',
+      content: '',
+    });
+  });
+
   it('update-page handler returns expected data', async () => {
     const mockUpdatePage = jest.fn().mockResolvedValue({
       data: { id: '123', title: 'Updated Title', status: 'current' },
@@ -256,6 +280,16 @@ describe('registerPageTools', () => {
 
   it('search-pages-by-title handler returns empty array if no results', async () => {
     const mockSearchPagesByTitle = jest.fn().mockResolvedValue({ data: { results: [] } });
+    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
+    registerPageTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
+    const handler = call[3];
+    const result = await handler({ title: 'Nothing' }, {});
+    expect(result).toEqual({ pages: [] });
+  });
+
+  it('search-pages-by-title handler returns empty array if both results and pageResults are missing', async () => {
+    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({ data: {} });
     MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
     registerPageTools(server, config);
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');

@@ -58,6 +58,28 @@ describe('registerJiraTools', () => {
     expect(mockGetIssue).toHaveBeenCalledWith('JIRA-1');
   });
 
+  it('get-jira-issue handler handles missing fields', async () => {
+    const mockGetIssue = jest.fn().mockResolvedValue({
+      data: {
+        key: 'JIRA-7',
+        fields: {}
+      },
+    });
+    MockedJiraClient.prototype.getIssue = mockGetIssue;
+    registerJiraTools(server, config);
+    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    const handler = getIssueCall[3];
+    const result = await handler({ issueKey: 'JIRA-7' }, {});
+    expect(result).toEqual({
+      key: 'JIRA-7',
+      summary: '',
+      status: '',
+      assignee: 'Unassigned',
+      url: 'https://example.atlassian.net/browse/JIRA-7',
+      description: undefined,
+    });
+  });
+
   it('search-jira-issues handler returns expected data', async () => {
     const mockSearchIssues = jest.fn().mockResolvedValue({
       data: {
@@ -79,6 +101,28 @@ describe('registerJiraTools', () => {
       ],
     });
     expect(mockSearchIssues).toHaveBeenCalledWith('project=TEST', 0, 2);
+  });
+
+  it('search-jira-issues handler handles missing fields in issues', async () => {
+    const mockSearchIssues = jest.fn().mockResolvedValue({
+      data: {
+        issues: [
+          { key: 'JIRA-8', fields: {} },
+          { key: 'JIRA-9', fields: { assignee: {} } },
+        ],
+      },
+    });
+    MockedJiraClient.prototype.searchIssues = mockSearchIssues;
+    registerJiraTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    const handler = call[3];
+    const result = await handler({ jql: 'project=TEST' }, {});
+    expect(result).toEqual({
+      issues: [
+        { key: 'JIRA-8', summary: '', status: '', assignee: 'Unassigned', url: 'https://example.atlassian.net/browse/JIRA-8' },
+        { key: 'JIRA-9', summary: '', status: '', assignee: 'Unassigned', url: 'https://example.atlassian.net/browse/JIRA-9' },
+      ],
+    });
   });
 
   it('search-jira-issues handler returns empty array if no results', async () => {
