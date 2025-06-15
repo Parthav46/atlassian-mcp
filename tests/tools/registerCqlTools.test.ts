@@ -29,8 +29,8 @@ describe('registerCqlTools', () => {
     const mockSearchWithCql = jest.fn().mockResolvedValue({
       data: {
         results: [
-          { id: '1', title: 'Page 1', _links: { webui: '/wiki/spaces/SPACE/pages/1' } },
-          { id: '2', title: 'Page 2', _links: { webui: '/wiki/spaces/SPACE/pages/2' } },
+          { id: '1', title: 'Page 1', _links: { webui: '/spaces/SPACE/pages/1' } },
+          { id: '2', title: 'Page 2', _links: { webui: '/spaces/SPACE/pages/2' } },
         ],
       },
     });
@@ -87,7 +87,7 @@ describe('registerCqlTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Search Results:\n- Untitled: https://example.atlassian.net/pages/3\n- Untitled: https://example.atlassian.net/pages/4\n- Untitled: https://example.atlassian.net/pages/5'
+          text: 'Search Results:\n- Untitled: Page ID: 3\n- Untitled: Page ID: 4\n- Untitled: Page ID: 5'
         }
       ]
     });
