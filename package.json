@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "tsc",
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts"
   },
-  "keywords": ["mcp", "atlassian", "confluence", "jira"],
+  "keywords": [
+    "mcp",
+    "atlassian",
+    "confluence",
+    "jira"
+  ],
   "author": "Parthav46",
   "license": "ISC",
   "description": "MCP server for Atlassian Confluence and Jira integration",
@@ -21,7 +26,10 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/jest": "^29.5.14",
     "@types/node": "^24.0.1",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
   }
 }
