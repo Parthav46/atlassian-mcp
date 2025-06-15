@@ -33,18 +33,6 @@ export class ConfluenceClient {
       },
     });
 
-    // Log all requests for debugging
-    this.axios.interceptors.request.use((request) => {
-      console.log('[Confluence API Request]', JSON.stringify({
-        method: request.method,
-        url: (request.baseURL ?? "") + request.url,
-        params: request.params,
-        data: request.data,
-        headers: request.headers,
-      }));
-      return request;
-    });
-
     // Add error logging
     this.axios.interceptors.response.use(
       (response) => response,

@@ -29,8 +29,8 @@ describe('registerCqlTools', () => {
     const mockSearchWithCql = jest.fn().mockResolvedValue({
       data: {
         results: [
-          { id: '1', title: 'Page 1', space: { key: 'SPACE' } },
-          { id: '2', title: 'Page 2', space: { key: 'SPACE' } },
+          { id: '1', title: 'Page 1', _links: { webui: '/wiki/spaces/SPACE/pages/1' } },
+          { id: '2', title: 'Page 2', _links: { webui: '/wiki/spaces/SPACE/pages/2' } },
         ],
       },
     });
@@ -41,10 +41,12 @@ describe('registerCqlTools', () => {
     const handler = call[3];
     const result = await handler({ cql: 'type=page', limit: 2, start: 0 }, {});
     expect(result).toEqual({
-      pages: [
-        { id: '1', title: 'Page 1', url: 'https://example.atlassian.net/spaces/SPACE/pages/1' },
-        { id: '2', title: 'Page 2', url: 'https://example.atlassian.net/spaces/SPACE/pages/2' },
-      ],
+      content: [
+        {
+          type: 'text',
+          text: 'Search Results:\n- Page 1: https://example.atlassian.net/wiki/spaces/SPACE/pages/1\n- Page 2: https://example.atlassian.net/wiki/spaces/SPACE/pages/2'
+        }
+      ]
     });
     expect(mockSearchWithCql).toHaveBeenCalledWith('type=page', 2, 0);
   });
@@ -56,16 +58,23 @@ describe('registerCqlTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'confluence_search');
     const handler = call[3];
     const result = await handler({ cql: 'type=page', limit: 2, start: 0 }, {});
-    expect(result).toEqual({ pages: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No results found.'
+        }
+      ]
+    });
   });
 
-  it('confluence_search handler handles missing title and space key', async () => {
+  it('confluence_search handler handles missing title and _links.webui', async () => {
     const mockSearchWithCql = jest.fn().mockResolvedValue({
       data: {
         results: [
-          { id: '3' },
-          { id: '4', title: undefined, space: {} },
-          { id: '5', title: '', space: undefined },
+          { id: '3', _links: {} },
+          { id: '4', title: undefined },
+          { id: '5', title: '', _links: undefined },
         ],
       },
     });
@@ -75,11 +84,12 @@ describe('registerCqlTools', () => {
     const handler = call[3];
     const result = await handler({ cql: 'type=page' }, {});
     expect(result).toEqual({
-      pages: [
-        { id: '3', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/3' },
-        { id: '4', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/4' },
-        { id: '5', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/5' },
-      ],
+      content: [
+        {
+          type: 'text',
+          text: 'Search Results:\n- Untitled: https://example.atlassian.net/pages/3\n- Untitled: https://example.atlassian.net/pages/4\n- Untitled: https://example.atlassian.net/pages/5'
+        }
+      ]
     });
   });
 });

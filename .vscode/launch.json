@@ -1,0 +1,15 @@
+{
+    "configurations": [
+    {
+        "name": "Attach by Process ID",
+        "processId": "${command:PickProcess}",
+        "request": "attach",
+        "skipFiles": [
+            "<node_internals>/**"
+        ],
+        "type": "node",
+        "sourceMaps": true,
+        "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    }
+    ]
+}
