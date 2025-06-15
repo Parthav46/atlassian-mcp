@@ -30,7 +30,7 @@ Follow these steps to set up the MCP server locally:
 3. **Configure environment:**
    - You can set configuration options using command-line arguments or environment variables:
      - `--base-url=<Confluence or Jira base URL>`
-     - `--user-token=<User token>`
+     - `--token=<User token>`
      - `--username=<Username>`
    - These arguments override environment variables if both are set.
 4. **Build the project:**
@@ -39,37 +39,36 @@ Follow these steps to set up the MCP server locally:
    ```
 5. **Run the server using npx:**
    ```sh
-   npx atlassian-mcp --base-url=<Confluence or Jira base URL> --user-token=<User token> --username=<Username>
+   npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
    ```
    - You can also use environment variables instead of command-line arguments.
 
-6. **Create MCP JSON config for Copilot:**
+6. **Create MCP JSON config for Copilot or Claude for Desktop:**
    - Create a file named `mcp.json` in your project root with the following content:
      ```json
      {
        "command": "npx",
        "type": "stdio",
        "args": [
-         "atlassian-mcp",
-         "--base-url=<Confluence or Jira base URL>",
-         "--user-token=<User token>",
-         "--username=<Username>"
-       ]
+         "atlassian-mcp"
+       ],
+       "env": {
+         "ATLASSIAN_BASE_URL": "<Your Jira Base URL>",
+         "ATLASSIAN_API_TOKEN": "<Your Atlassian API Token>",
+         "ATLASSIAN_USERNAME": "<Your Atlassian Username>"
+       }
      }
      ```
    - Replace the placeholders with your actual configuration values.
+   - This configuration works for both GitHub Copilot and Claude for Desktop.
 
 ## Usage via npx (published package)
 
 Once the package is published to npm, you can run the server directly without cloning or building:
 
 ```sh
-npx atlassian-mcp --base-url=<Confluence or Jira base URL> --user-token=<User token> --username=<Username>
+npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
 ```
-
-## Usage with Claude for Desktop
-- Add this server as an MCP server in your Claude for Desktop config.
-- The server communicates over stdio and exposes tools for Confluence and Jira operations.
 
 ## Scripts
 - `npm run build` — Compile TypeScript

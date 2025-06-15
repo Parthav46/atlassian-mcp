@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 
 export interface ConfluenceConfig {
   baseUrl: string;
-  userToken: string;
+  token: string;
   username: string;
 }
 
@@ -23,7 +23,7 @@ export class ConfluenceClient {
   private axios: AxiosInstance;
 
   constructor(config: ConfluenceConfig) {
-    const authString = Buffer.from(`${config.username}:${config.userToken}`).toString('base64');
+    const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
       headers: {
@@ -31,6 +31,18 @@ export class ConfluenceClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+    });
+
+    // Log all requests for debugging
+    this.axios.interceptors.request.use((request) => {
+      console.log('[Confluence API Request]', JSON.stringify({
+        method: request.method,
+        url: (request.baseURL ?? "") + request.url,
+        params: request.params,
+        data: request.data,
+        headers: request.headers,
+      }));
+      return request;
     });
 
     // Add error logging

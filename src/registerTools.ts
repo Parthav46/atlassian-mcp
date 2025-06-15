@@ -4,25 +4,25 @@ import { registerSpaceTools } from "./tools/registerSpaceTools";
 import { registerCqlTools } from "./tools/registerCqlTools";
 
 function getAtlassianConfig() {
-  // Use --base-url, --user-token, --username for both
+  // Use --base-url, --token, --username for both
   let baseUrl = '';
-  let userToken = '';
+  let token = '';
   let username = '';
   for (let i = 0; i < process.argv.length; i++) {
     if (process.argv[i] === '--base-url' && process.argv[i + 1]) {
       baseUrl = process.argv[i + 1];
     }
-    if (process.argv[i] === '--user-token' && process.argv[i + 1]) {
-      userToken = process.argv[i + 1];
+    if (process.argv[i] === '--token' && process.argv[i + 1]) {
+      token = process.argv[i + 1];
     }
     if (process.argv[i] === '--username' && process.argv[i + 1]) {
       username = process.argv[i + 1];
     }
   }
-  if (!baseUrl) baseUrl = process.env.BASE_URL || '';
-  if (!userToken) userToken = process.env.USER_TOKEN || '';
-  if (!username) username = process.env.USERNAME || '';
-  return Object.freeze({ baseUrl, userToken, username });
+  if (!baseUrl) baseUrl = process.env.ATLASSIAN_BASE_URL || '';
+  if (!token) token = process.env.ATLASSIAN_API_TOKEN || '';
+  if (!username) username = process.env.ATLASSIAN_USERNAME || '';
+  return Object.freeze({ baseUrl, token, username });
 }
 
 export function registerTools(server: any) {
