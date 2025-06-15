@@ -1,5 +1,4 @@
-
-import { JiraClient } from '../../src/clients/jiraClient';
+import { JiraClient, jiraErrorHandler } from '../../src/clients/jiraClient';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -49,5 +48,35 @@ describe('JiraClient', () => {
     mockedAxios.delete.mockResolvedValue({ data: {} });
     await client.deleteIssue('TEST-4');
     expect(mockedAxios.delete).toHaveBeenCalledWith('/rest/api/3/issue/TEST-4');
+  });
+
+  it('should call searchIssues with only jql', async () => {
+    mockedAxios.get.mockResolvedValue({ data: { issues: [] } });
+    await client.searchIssues('project=TEST');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/rest/api/3/search', { params: { jql: 'project=TEST', startAt: undefined, maxResults: undefined } });
+  });
+});
+
+describe('jiraErrorHandler', () => {
+  it('logs error with response', async () => {
+    const error = {
+      response: { status: 400, data: 'Bad request' },
+      config: { url: '/rest/api/3/issue/404' }
+    };
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    await expect(jiraErrorHandler(error)).rejects.toBe(error);
+    expect(spy).toHaveBeenCalledWith('[Jira API Error]', {
+      url: '/rest/api/3/issue/404',
+      status: 400,
+      data: 'Bad request',
+    });
+    spy.mockRestore();
+  });
+  it('logs error without response', async () => {
+    const error = { message: 'Network Error' };
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    await expect(jiraErrorHandler(error)).rejects.toBe(error);
+    expect(spy).toHaveBeenCalledWith('[Jira API Error]', 'Network Error');
+    spy.mockRestore();
   });
 });

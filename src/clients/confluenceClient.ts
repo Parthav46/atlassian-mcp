@@ -6,6 +6,19 @@ export interface ConfluenceConfig {
   username: string;
 }
 
+export function confluenceErrorHandler(error: any) {
+  if (error.response) {
+    console.error('[Confluence API Error]', {
+      url: error.config?.url,
+      status: error.response.status,
+      data: error.response.data,
+    });
+  } else {
+    console.error('[Confluence API Error]', error.message);
+  }
+  return Promise.reject(error);
+}
+
 export class ConfluenceClient {
   private axios: AxiosInstance;
 
@@ -23,18 +36,7 @@ export class ConfluenceClient {
     // Add error logging
     this.axios.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response) {
-          console.error('[Confluence API Error]', {
-            url: error.config?.url,
-            status: error.response.status,
-            data: error.response.data,
-          });
-        } else {
-          console.error('[Confluence API Error]', error.message);
-        }
-        return Promise.reject(error);
-      }
+      confluenceErrorHandler
     );
   }
 

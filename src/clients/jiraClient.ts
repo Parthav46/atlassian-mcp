@@ -6,6 +6,19 @@ export interface JiraConfig {
   username: string;
 }
 
+export function jiraErrorHandler(error: any) {
+  if (error.response) {
+    console.error('[Jira API Error]', {
+      url: error.config?.url,
+      status: error.response.status,
+      data: error.response.data,
+    });
+  } else {
+    console.error('[Jira API Error]', error.message);
+  }
+  return Promise.reject(error);
+}
+
 export class JiraClient {
   private axios: AxiosInstance;
 
@@ -23,18 +36,7 @@ export class JiraClient {
     // Add error logging
     this.axios.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response) {
-          console.error('[Jira API Error]', {
-            url: error.config?.url,
-            status: error.response.status,
-            data: error.response.data,
-          });
-        } else {
-          console.error('[Jira API Error]', error.message);
-        }
-        return Promise.reject(error);
-      }
+      jiraErrorHandler
     );
   }
 
