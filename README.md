@@ -9,40 +9,63 @@ This project implements a Model Context Protocol (MCP) server for interacting wi
 - Designed for LLM integration (e.g., Claude for Desktop)
 - Multi-project support via headers
 
-## Setup
+## Local Setup
 
-1. **Install dependencies:**
+Follow these steps to set up the MCP server locally:
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- [npm](https://www.npmjs.com/) (comes with Node.js)
+
+### Steps
+1. **Clone the repository:**
+   ```sh
+   git clone <repo-url>
+   cd atlassian-mcp
+   ```
+2. **Install dependencies:**
    ```sh
    npm install
    ```
-
-2. **Configure environment:**
-   - Set optional defaults using node command arguments:
-     ```
-     --base-url=<Confluence or Jira base URL>
-     --user-token=<User token>
-     --username=<Username>
-     ```
-   - These arguments are passed when starting the server and override any environment variables.
-
-3. **Build the project:**
+3. **Configure environment:**
+   - You can set configuration options using command-line arguments or environment variables:
+     - `--base-url=<Confluence or Jira base URL>`
+     - `--user-token=<User token>`
+     - `--username=<Username>`
+   - These arguments override environment variables if both are set.
+4. **Build the project:**
    ```sh
    npm run build
    ```
-
-4. **Run the server:**
-   ```sh
-   npm start
-   ```
+5. **Create MCP JSON config for Copilot:**
+   - Create a file named `mcp.json` in your project root with the following content:
+     ```json
+     {
+       "command": "npx",
+       "type": "stdio",
+       "args": [
+         "node",
+         "<Absolute path to Directory>/dist/index.js",
+         "--base-url=<Confluence or Jira base URL>",
+         "--user-token=<User token>",
+         "--username=<Username>"
+       ]
+     }
+     ```
+   - Replace the placeholders with your actual configuration values.
 
 ## Code Structure
 
-The project is modularized for better maintainability:
-- **src/registerTools.ts**: Delegates tool registration to modular files.
-- **src/registerJiraTools.ts**: Handles Jira-related tools.
-- **src/registerPageTools.ts**: Handles Confluence page-related tools.
-- **src/registerSpaceTools.ts**: Handles Confluence space-related tools.
-- **src/registerCqlTools.ts**: Handles advanced CQL search tools.
+The project is modularized for maintainability and clarity:
+- **src/index.ts**: Entry point for the MCP server (stdio transport).
+- **src/registerTools.ts**: Loads configuration and registers all tool modules with the server.
+- **src/clients/confluenceClient.ts**: Confluence API client (handles authentication and requests).
+- **src/clients/jiraClient.ts**: Jira API client (handles authentication and requests).
+- **src/tools/registerPageTools.ts**: Registers Confluence page-related tools (get, update, create, delete, search pages).
+- **src/tools/registerSpaceTools.ts**: Registers Confluence space and folder tools (get space, list spaces, get folder, get pages from space).
+- **src/tools/registerCqlTools.ts**: Registers advanced CQL search tools for Confluence.
+- **src/tools/registerJiraTools.ts**: Registers Jira issue tools (get, search, create, update, delete issues).
+- **config/confluence.ts**: Utility for extracting Confluence config from headers or environment.
 
 ## Usage with Claude for Desktop
 - Add this server as an MCP server in your Claude for Desktop config.
