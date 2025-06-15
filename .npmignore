@@ -1,0 +1,11 @@
+coverage/
+tests/
+*.test.ts
+jest.config.js
+tsconfig.json
+README.md
+.gitignore
+.github/
+*.log
+node_modules/
+.env

@@ -1,13 +1,14 @@
 {
   "name": "atlassian-mcp",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "0.1.0",
+  "main": "dist/src/index.js",
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint ."
   },
   "keywords": [
     "mcp",
@@ -16,7 +17,7 @@
     "jira"
   ],
   "author": "Parthav46",
-  "license": "ISC",
+  "license": "MIT",
   "description": "MCP server for Atlassian Confluence and Jira integration",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
