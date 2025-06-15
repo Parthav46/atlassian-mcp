@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfluenceClient } from "./confluenceClient.js";
+import { ConfluenceClient } from "../clients/confluenceClient.js";
 
 export function registerPageTools(server: any, config: any) {
   server.tool(
