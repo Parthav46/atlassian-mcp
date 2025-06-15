@@ -44,7 +44,10 @@ describe('registerCqlTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Search Results:\n- Page 1: https://example.atlassian.net/wiki/spaces/SPACE/pages/1\n- Page 2: https://example.atlassian.net/wiki/spaces/SPACE/pages/2'
+          text: `Search Results (raw JSON):\n${JSON.stringify([
+            { id: '1', title: 'Page 1', _links: { webui: '/spaces/SPACE/pages/1' } },
+            { id: '2', title: 'Page 2', _links: { webui: '/spaces/SPACE/pages/2' } },
+          ], null, 2)}`
         }
       ]
     });
@@ -87,7 +90,11 @@ describe('registerCqlTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Search Results:\n- Untitled: Page ID: 3\n- Untitled: Page ID: 4\n- Untitled: Page ID: 5'
+          text: `Search Results (raw JSON):\n${JSON.stringify([
+            { id: '3', _links: {} },
+            { id: '4', title: undefined },
+            { id: '5', title: '', _links: undefined },
+          ], null, 2)}`
         }
       ]
     });

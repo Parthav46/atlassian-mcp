@@ -24,19 +24,11 @@ export function registerCqlTools(server: any, config: any) {
           ]
         };
       }
-      const lines = results.map((page: any) => {
-        const title = page.title || "Untitled";
-        if (!page._links || !page._links.webui) {
-          return `- ${title}: Page ID: ${page.id}`;
-        }
-        const url = `${config.baseUrl}/wiki${page._links.webui}`;
-        return `- ${title}: ${url}`;
-      });
       return {
         content: [
           {
             type: "text",
-            text: `Search Results:\n${lines.join("\n")}`
+            text: `Search Results (raw JSON):\n${JSON.stringify(results, null, 2)}`
           }
         ]
       };
