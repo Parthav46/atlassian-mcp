@@ -8,10 +8,10 @@
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["mcp", "atlassian", "confluence", "jira"],
+  "author": "Parthav46",
   "license": "ISC",
-  "description": "",
+  "description": "MCP server for Atlassian Confluence and Jira integration",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "axios": "^1.9.0",

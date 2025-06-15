@@ -78,4 +78,9 @@ The project is modularized for maintainability and clarity:
 
 ---
 
-MIT License
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+This project was created entirely using GitHub Copilot with GPT-4.1.
+
