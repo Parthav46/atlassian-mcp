@@ -58,14 +58,18 @@ export function registerSpaceTools(server: any, config: any) {
 
   server.tool(
     "list-spaces",
-    "List all Confluence spaces",
-    { start: z.number().optional().describe("Start index"), limit: z.number().optional().describe("Page size limit") },
+    "List all Confluence spaces (optionally filter by keys)",
+    {
+      start: z.number().optional().describe("Start index"),
+      limit: z.number().optional().describe("Page size limit"),
+      keys: z.string().optional().describe("Filter by key(s), comma-separated")
+    },
     async (
-      { start, limit }: { start?: number; limit?: number },
+      { start, limit, keys }: { start?: number; limit?: number; keys?: string },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.listSpaces(start, limit);
+      const response = await client.listSpaces(start, limit, keys);
       const results = response.data.results || [];
       if (!Array.isArray(results) || !results.length) {
         return {

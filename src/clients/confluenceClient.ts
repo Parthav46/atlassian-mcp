@@ -67,11 +67,12 @@ export class ConfluenceClient {
     return this.axios.get(`/wiki/api/v2/spaces/${spaceId}`);
   }
 
-  // List all spaces
-  async listSpaces(start?: number, limit?: number) {
+  // List all spaces (optionally filter by key(s))
+  async listSpaces(start?: number, limit?: number, keys?: string) {
     const params: any = {};
     if (start !== undefined) params.start = start;
     if (limit !== undefined) params.limit = limit;
+    if (keys !== undefined) params.keys = keys;
     return this.axios.get(`/wiki/api/v2/spaces`, { params });
   }
 

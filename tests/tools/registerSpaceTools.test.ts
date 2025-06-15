@@ -179,7 +179,29 @@ describe('registerSpaceTools', () => {
         }
       ]
     });
-    expect(mockListSpaces).toHaveBeenCalledWith(0, 2);
+    expect(mockListSpaces).toHaveBeenCalledWith(0, 2, undefined);
+  });
+
+  it('list-spaces handler filters by keys', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({
+      data: { results: [
+        { id: 'SPACEID', key: 'S1', name: 'Sample Space' }
+      ] },
+    });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
+    registerSpaceTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    const handler = call[3];
+    const result = await handler({ keys: 'S1' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Spaces:\n- Sample Space (KEY: S1, ID: SPACEID): https://example.atlassian.net/spaces/S1'
+        }
+      ]
+    });
+    expect(mockListSpaces).toHaveBeenCalledWith(undefined, undefined, 'S1');
   });
 
   it('list-spaces handler returns empty array if no results', async () => {
