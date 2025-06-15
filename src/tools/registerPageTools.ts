@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfluenceClient } from "../clients/confluenceClient.js";
+import { ConfluenceClient } from "../clients/confluenceClient";
 
 export function registerPageTools(server: any, config: any) {
   server.tool(
@@ -16,14 +16,16 @@ export function registerPageTools(server: any, config: any) {
       const page = response.data;
       let content = "";
       if (format === "markdown") {
-        content = page.body?.atlas_doc_format?.value || "No markdown content found.";
+        content = page.body?.atlas_doc_format?.value || "";
       } else {
-        content = page.body?.storage?.value || "No storage content found.";
+        content = page.body?.storage?.value || "";
       }
+      // Return only essential fields and the full content
       return {
-        content: [
-          { type: "text", text: `Title: ${page.title}\nPage ID: ${page.id}\nFormat: ${format}\n---\n${content}` }
-        ]
+        id: page.id,
+        title: page.title,
+        url: `${config.baseUrl}/pages/${page.id}`,
+        content
       };
     }
   );
@@ -38,7 +40,12 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.updatePage(pageId, data);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const page = response.data;
+      return {
+        id: page.id,
+        title: page.title,
+        status: page.status || "updated"
+      };
     }
   );
 
@@ -52,7 +59,12 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const children = (response.data.results || []).map((child: any) => ({
+        id: child.id,
+        title: child.title,
+        url: `${config.baseUrl}/pages/${child.id}`
+      }));
+      return { children };
     }
   );
 
@@ -66,7 +78,12 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.createPage(spaceId, title, body, parentId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const page = response.data;
+      return {
+        id: page.id,
+        title: page.title,
+        url: `${config.baseUrl}/pages/${page.id}`
+      };
     }
   );
 
@@ -79,8 +96,8 @@ export function registerPageTools(server: any, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.deletePage(pageId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      await client.deletePage(pageId);
+      return { id: pageId, status: "deleted" };
     }
   );
 
@@ -96,15 +113,14 @@ export function registerPageTools(server: any, config: any) {
       const response = await client.searchPagesByTitle(title);
       const results = response.data.results || response.data.pageResults || [];
       if (!results.length) {
-        return { content: [{ type: "text", text: "No pages found." }] };
+        return { pages: [] };
       }
-      const summary = results.map((page: any) => {
-        const id = page.id;
-        const pageTitle = page.title || "Untitled";
-        const url = `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${id}`;
-        return `- [${pageTitle}] (ID: ${id}) ${url}`;
-      }).join("\n");
-      return { content: [{ type: "text", text: `Confluence pages found:\n${summary}` }] };
+      const pages = results.map((page: any) => ({
+        id: page.id,
+        title: page.title || "Untitled",
+        url: `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${page.id}`
+      }));
+      return { pages };
     }
   );
 }

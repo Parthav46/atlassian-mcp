@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { JiraClient } from "./jiraClient.js";
+import { JiraClient } from "../clients/jiraClient";
 
 export function registerJiraTools(server: any, config: any) {
   server.tool(
@@ -12,7 +12,15 @@ export function registerJiraTools(server: any, config: any) {
     ) => {
       const client = new JiraClient(config);
       const response = await client.getIssue(issueKey);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const issue = response.data;
+      return {
+        key: issue.key,
+        summary: issue.fields?.summary || "",
+        status: issue.fields?.status?.name || "",
+        assignee: issue.fields?.assignee?.displayName || "Unassigned",
+        url: `${config.baseUrl}/browse/${issue.key}`,
+        description: issue.fields?.description || undefined
+      };
     }
   );
 
@@ -28,16 +36,17 @@ export function registerJiraTools(server: any, config: any) {
       const response = await client.searchIssues(jql, startAt, maxResults);
       const issues = response.data.issues || [];
       if (issues.length === 0) {
-        return { content: [{ type: "text", text: "No issues found." }] };
+        return { issues: [] };
       }
-      const summary = issues.map((issue: any) => {
-        const key = issue.key;
-        const summary = issue.fields?.summary || "";
-        const status = issue.fields?.status?.name || "";
-        const assignee = issue.fields?.assignee?.displayName || "Unassigned";
-        return `- [${key}] ${summary} (Status: ${status}, Assignee: ${assignee})`;
-      }).join("\n");
-      return { content: [{ type: "text", text: `Jira issues found:\n${summary}` }] };
+      return {
+        issues: issues.map((issue: any) => ({
+          key: issue.key,
+          summary: issue.fields?.summary || "",
+          status: issue.fields?.status?.name || "",
+          assignee: issue.fields?.assignee?.displayName || "Unassigned",
+          url: `${config.baseUrl}/browse/${issue.key}`
+        }))
+      };
     }
   );
 
@@ -51,7 +60,12 @@ export function registerJiraTools(server: any, config: any) {
     ) => {
       const client = new JiraClient(config);
       const response = await client.createIssue(issueData);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const issue = response.data;
+      return {
+        key: issue.key,
+        url: `${config.baseUrl}/browse/${issue.key}`,
+        summary: issue.fields?.summary || ""
+      };
     }
   );
 
@@ -65,7 +79,11 @@ export function registerJiraTools(server: any, config: any) {
     ) => {
       const client = new JiraClient(config);
       const response = await client.updateIssue(issueKey, issueData);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const issue = response.data;
+      return {
+        key: issue.key,
+        status: issue.fields?.status?.name || "updated"
+      };
     }
   );
 
@@ -78,8 +96,8 @@ export function registerJiraTools(server: any, config: any) {
       _extra: any
     ) => {
       const client = new JiraClient(config);
-      const response = await client.deleteIssue(issueKey);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      await client.deleteIssue(issueKey);
+      return { key: issueKey, status: "deleted" };
     }
   );
 }

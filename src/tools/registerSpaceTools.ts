@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfluenceClient } from "./confluenceClient.js";
+import { ConfluenceClient } from "../clients/confluenceClient";
 
 export function registerSpaceTools(server: any, config: any) {
   server.tool(
@@ -12,7 +12,13 @@ export function registerSpaceTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getFolder(folderId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const folder = response.data;
+      return {
+        id: folder.id,
+        name: folder.name,
+        url: `${config.baseUrl}/folders/${folder.id}`,
+        description: folder.description || undefined
+      };
     }
   );
 
@@ -26,7 +32,14 @@ export function registerSpaceTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getSpace(spaceId);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const space = response.data;
+      return {
+        id: space.id,
+        key: space.key,
+        name: space.name,
+        url: `${config.baseUrl}/spaces/${space.key}`,
+        description: space.description?.plain?.value || undefined
+      };
     }
   );
 
@@ -40,7 +53,14 @@ export function registerSpaceTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.listSpaces(start, limit);
-      return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+      const results = response.data.results || [];
+      const spaces = results.map((space: any) => ({
+        id: space.id,
+        key: space.key,
+        name: space.name,
+        url: `${config.baseUrl}/spaces/${space.key}`
+      }));
+      return { spaces };
     }
   );
 
@@ -56,15 +76,14 @@ export function registerSpaceTools(server: any, config: any) {
       const response = await client.getPagesFromSpace(spaceId, limit, cursor);
       const results = response.data.results || [];
       if (!results.length) {
-        return { content: [{ type: "text", text: "No pages found in this space." }] };
+        return { pages: [] };
       }
-      const summary = results.map((page: any) => {
-        const id = page.id;
-        const pageTitle = page.title || "Untitled";
-        const url = `${config.baseUrl}/spaces/${spaceId}/pages/${id}`;
-        return `- [${pageTitle}] (ID: ${id}) ${url}`;
-      }).join("\n");
-      return { content: [{ type: "text", text: `Pages in space '${spaceId}':\n${summary}` }] };
+      const pages = results.map((page: any) => ({
+        id: page.id,
+        title: page.title || "Untitled",
+        url: `${config.baseUrl}/spaces/${spaceId}/pages/${page.id}`
+      }));
+      return { pages };
     }
   );
 }

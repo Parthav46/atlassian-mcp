@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfluenceClient } from "./confluenceClient.js";
+import { ConfluenceClient } from "../clients/confluenceClient";
 
 export function registerCqlTools(server: any, config: any) {
   server.tool(
@@ -14,15 +14,14 @@ export function registerCqlTools(server: any, config: any) {
       const response = await client.searchWithCql(cql, limit, start);
       const results = response.data.results || [];
       if (!results.length) {
-        return { content: [{ type: "text", text: "No pages found for this CQL query." }] };
+        return { pages: [] };
       }
-      const summary = results.map((page: any) => {
-        const id = page.id;
-        const pageTitle = page.title || "Untitled";
-        const url = `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${id}`;
-        return `- [${pageTitle}] (ID: ${id}) ${url}`;
-      }).join("\n");
-      return { content: [{ type: "text", text: `Confluence search results:\n${summary}` }] };
+      const pages = results.map((page: any) => ({
+        id: page.id,
+        title: page.title || "Untitled",
+        url: `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${page.id}`
+      }));
+      return { pages };
     }
   );
 }
