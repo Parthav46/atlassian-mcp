@@ -330,6 +330,74 @@ describe('registerJiraTools', () => {
     expect(mockUpdateIssue).toHaveBeenCalledWith('JIRA-5', { fields: { status: { name: 'updated' } } });
   });
 
+  it('update-jira-issue handler handles missing status', async () => {
+    const mockUpdateIssue = jest.fn().mockResolvedValue({
+      data: { key: 'JIRA-12', fields: {} },
+    });
+    MockedJiraClient.prototype.updateIssue = mockUpdateIssue;
+    registerJiraTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-jira-issue');
+    const handler = call[3];
+    const result = await handler({ issueKey: 'JIRA-12', issueData: {} }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Updated issue: JIRA-12\nStatus: updated'
+        }
+      ]
+    });
+  });
+
+  it('get-jira-issue handler handles undefined description and subtasks', async () => {
+    const mockGetIssue = jest.fn().mockResolvedValue({
+      data: {
+        key: 'JIRA-13',
+        fields: {
+          summary: 'No desc/subtasks',
+          status: { name: 'To Do' },
+          assignee: { displayName: 'Bob' },
+          // description and subtasks are undefined
+        },
+      },
+    });
+    MockedJiraClient.prototype.getIssue = mockGetIssue;
+    registerJiraTools(server, config);
+    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    const handler = getIssueCall[3];
+    const result = await handler({ issueKey: 'JIRA-13' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text:
+            'Key: JIRA-13\n' +
+            'Summary: No desc/subtasks\n' +
+            'Status: To Do\n' +
+            'Assignee: Bob\n' +
+            'URL: https://example.atlassian.net/browse/JIRA-13\n'
+        }
+      ]
+    });
+  });
+
+  it('search-jira-issues handler handles undefined issues', async () => {
+    const mockSearchIssues = jest.fn().mockResolvedValue({ data: {} });
+    MockedJiraClient.prototype.searchIssues = mockSearchIssues;
+    registerJiraTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    const handler = call[3];
+    const result = await handler({ jql: 'project=NONE' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No issues found.'
+        }
+      ]
+    });
+  });
+
   it('delete-jira-issue handler returns expected data', async () => {
     const mockDeleteIssue = jest.fn().mockResolvedValue({});
     MockedJiraClient.prototype.deleteIssue = mockDeleteIssue;
