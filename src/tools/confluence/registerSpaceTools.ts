@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfluenceClient } from "../clients/confluenceClient";
+import { ConfluenceClient } from "../../clients/confluenceClient";
 
 export function registerSpaceTools(server: any, config: any) {
   server.tool(

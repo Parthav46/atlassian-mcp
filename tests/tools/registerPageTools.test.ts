@@ -1,4 +1,4 @@
-import { registerPageTools } from '../../src/tools/registerPageTools';
+import { registerPageTools } from '../../src/tools/confluence/registerPageTools';
 import { ConfluenceClient } from '../../src/clients/confluenceClient';
 
 jest.mock('../../src/clients/confluenceClient');
