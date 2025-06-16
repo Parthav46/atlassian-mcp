@@ -1,7 +1,7 @@
-import { registerJiraTools } from "./tools/registerJiraTools";
-import { registerPageTools } from "./tools/registerPageTools";
-import { registerSpaceTools } from "./tools/registerSpaceTools";
-import { registerCqlTools } from "./tools/registerCqlTools";
+import { registerJiraTools } from "./tools/jira/registerJiraTools";
+import { registerPageTools } from "./tools/confluence/registerPageTools";
+import { registerSpaceTools } from "./tools/confluence/registerSpaceTools";
+import { registerCqlTools } from "./tools/confluence/registerCqlTools";
 
 function getAtlassianConfig() {
   // Use --base-url, --token, --username for both

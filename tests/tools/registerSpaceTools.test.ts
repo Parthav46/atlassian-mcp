@@ -1,4 +1,4 @@
-import { registerSpaceTools } from '../../src/tools/registerSpaceTools';
+import { registerSpaceTools } from '../../src/tools/confluence/registerSpaceTools';
 import { ConfluenceClient } from '../../src/clients/confluenceClient';
 
 jest.mock('../../src/clients/confluenceClient');

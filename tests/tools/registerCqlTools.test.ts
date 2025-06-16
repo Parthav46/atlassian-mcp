@@ -1,4 +1,4 @@
-import { registerCqlTools } from '../../src/tools/registerCqlTools';
+import { registerCqlTools } from '../../src/tools/confluence/registerCqlTools';
 import { ConfluenceClient } from '../../src/clients/confluenceClient';
 
 jest.mock('../../src/clients/confluenceClient');

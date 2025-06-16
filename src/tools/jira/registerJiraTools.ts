@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { JiraClient } from "../clients/jiraClient";
+import { JiraClient } from "../../clients/jiraClient";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 
 export function registerJiraTools(server: any, config: any) {

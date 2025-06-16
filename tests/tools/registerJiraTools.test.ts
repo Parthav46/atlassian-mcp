@@ -1,4 +1,4 @@
-import { registerJiraTools } from '../../src/tools/registerJiraTools';
+import { registerJiraTools } from '../../src/tools/jira/registerJiraTools';
 import { JiraClient } from '../../src/clients/jiraClient';
 
 jest.mock('../../src/clients/jiraClient');
