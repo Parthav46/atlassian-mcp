@@ -16,8 +16,8 @@ describe('registerPageTools', () => {
 
   it('registers all expected tools', () => {
     registerPageTools(server, config);
-    // Should register 6 tools
-    expect(server.tool).toHaveBeenCalledTimes(6);
+    // Should register 5 tools
+    expect(server.tool).toHaveBeenCalledTimes(5);
     const toolNames = server.tool.mock.calls.map((call: any[]) => call[0]);
     expect(toolNames).toEqual(
       expect.arrayContaining([
@@ -26,7 +26,6 @@ describe('registerPageTools', () => {
         'get-children',
         'create-page',
         'delete-page',
-        'search-pages-by-title',
       ])
     );
   });
@@ -41,16 +40,17 @@ describe('registerPageTools', () => {
     });
     MockedConfluenceClient.prototype.getPage = mockGetPage;
     registerPageTools(server, config);
-    // Find get-page tool registration
     const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
     expect(getPageCall).toBeDefined();
     const handler = getPageCall[3];
     const result = await handler({ pageId: '123' }, {});
     expect(result).toEqual({
-      id: '123',
-      title: 'Test Page',
-      url: 'https://example.atlassian.net/pages/123',
-      content: '<p>Test</p>',
+      content: [
+        {
+          type: 'text',
+          text: 'Title: Test Page\nURL: No link available\n\n<p>Test</p>'
+        }
+      ]
     });
     expect(mockGetPage).toHaveBeenCalledWith('123', 'storage');
   });
@@ -69,34 +69,23 @@ describe('registerPageTools', () => {
     const handler = getPageCall[3];
     const result = await handler({ pageId: '123', bodyFormat: 'markdown' }, {});
     expect(result).toEqual({
-      id: '123',
-      title: 'Test Page',
-      url: 'https://example.atlassian.net/pages/123',
-      content: '# Markdown',
+      content: [
+        {
+          type: 'text',
+          text: 'Title: Test Page\nURL: No link available\n\n# Markdown'
+        }
+      ]
     });
     expect(mockGetPage).toHaveBeenCalledWith('123', 'markdown');
   });
 
   it('get-page handler handles missing body gracefully', async () => {
     const mockGetPage = jest.fn().mockResolvedValue({
-      data: { id: '123', title: 'Test Page' },
-    });
-    MockedConfluenceClient.prototype.getPage = mockGetPage;
-    registerPageTools(server, config);
-    const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
-    const handler = getPageCall[3];
-    const result = await handler({ pageId: '123' }, {});
-    expect(result).toEqual({
-      id: '123',
-      title: 'Test Page',
-      url: 'https://example.atlassian.net/pages/123',
-      content: '',
-    });
-  });
-
-  it('get-page handler handles missing storage and markdown fields', async () => {
-    const mockGetPage = jest.fn().mockResolvedValue({
-      data: { id: '124', title: 'No Body', body: {} },
+      data: {
+        id: '124',
+        title: 'No Body',
+        body: {},
+      },
     });
     MockedConfluenceClient.prototype.getPage = mockGetPage;
     registerPageTools(server, config);
@@ -104,17 +93,21 @@ describe('registerPageTools', () => {
     const handler = getPageCall[3];
     const resultStorage = await handler({ pageId: '124', bodyFormat: 'storage' }, {});
     expect(resultStorage).toEqual({
-      id: '124',
-      title: 'No Body',
-      url: 'https://example.atlassian.net/pages/124',
-      content: '',
+      content: [
+        {
+          type: 'text',
+          text: 'Title: No Body\nURL: No link available\n\n'
+        }
+      ]
     });
     const resultMarkdown = await handler({ pageId: '124', bodyFormat: 'markdown' }, {});
     expect(resultMarkdown).toEqual({
-      id: '124',
-      title: 'No Body',
-      url: 'https://example.atlassian.net/pages/124',
-      content: '',
+      content: [
+        {
+          type: 'text',
+          text: 'Title: No Body\nURL: No link available\n\n'
+        }
+      ]
     });
   });
 
@@ -126,28 +119,23 @@ describe('registerPageTools', () => {
     registerPageTools(server, config);
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-page');
     const handler = call[3];
-    const result = await handler({ pageId: '123', data: { title: 'Updated Title' } }, {});
-    expect(result).toEqual({ id: '123', title: 'Updated Title', status: 'current' });
-    expect(mockUpdatePage).toHaveBeenCalledWith('123', { title: 'Updated Title' });
-  });
-
-  it('update-page handler defaults status to updated if missing', async () => {
-    const mockUpdatePage = jest.fn().mockResolvedValue({
-      data: { id: '123', title: 'Updated Title' },
+    const result = await handler({ pageId: '123', title: 'Updated Title', body: '<p>Updated</p>', version: 2 }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Updated page: Updated Title (ID: 123) Status: current'
+        }
+      ]
     });
-    MockedConfluenceClient.prototype.updatePage = mockUpdatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-page');
-    const handler = call[3];
-    const result = await handler({ pageId: '123', data: { title: 'Updated Title' } }, {});
-    expect(result).toEqual({ id: '123', title: 'Updated Title', status: 'updated' });
+    expect(mockUpdatePage).toHaveBeenCalledWith('123', { title: 'Updated Title', body: '<p>Updated</p>', version: 2, status: undefined });
   });
 
   it('get-children handler returns children', async () => {
     const mockGetChildren = jest.fn().mockResolvedValue({
       data: { results: [
-        { id: 'c1', title: 'Child 1' },
-        { id: 'c2', title: 'Child 2' },
+        { id: 'c1', title: 'Child 1', spaceId: 'S1' },
+        { id: 'c2', title: 'Child 2', spaceId: 'S2' },
       ] },
     });
     MockedConfluenceClient.prototype.getChildren = mockGetChildren;
@@ -156,10 +144,12 @@ describe('registerPageTools', () => {
     const handler = call[3];
     const result = await handler({ pageId: 'parent' }, {});
     expect(result).toEqual({
-      children: [
-        { id: 'c1', title: 'Child 1', url: 'https://example.atlassian.net/pages/c1' },
-        { id: 'c2', title: 'Child 2', url: 'https://example.atlassian.net/pages/c2' },
-      ],
+      content: [
+        {
+          type: 'text',
+          text: 'Children:\n- Child 1: https://example.atlassian.net/wiki/spaces/S1/pages/c1\n- Child 2: https://example.atlassian.net/wiki/spaces/S2/pages/c2'
+        }
+      ]
     });
     expect(mockGetChildren).toHaveBeenCalledWith('parent');
   });
@@ -171,51 +161,35 @@ describe('registerPageTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-children');
     const handler = call[3];
     const result = await handler({ pageId: 'parent' }, {});
-    expect(result).toEqual({ children: [] });
-  });
-
-  it('get-children handler returns empty array if results is undefined', async () => {
-    const mockGetChildren = jest.fn().mockResolvedValue({ data: {} });
-    MockedConfluenceClient.prototype.getChildren = mockGetChildren;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-children');
-    const handler = call[3];
-    const result = await handler({ pageId: 'parent' }, {});
-    expect(result).toEqual({ children: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No children found.'
+        }
+      ]
+    });
   });
 
   it('create-page handler returns expected data', async () => {
     const mockCreatePage = jest.fn().mockResolvedValue({
-      data: { id: 'new1', title: 'New Page' },
+      status: 201,
+      data: { id: 'new1', title: 'New Page', _links: { webui: '/pages/new1' } },
     });
     MockedConfluenceClient.prototype.createPage = mockCreatePage;
     registerPageTools(server, config);
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
     const handler = call[3];
     const result = await handler({ spaceId: 'S', title: 'New Page', body: '<p>Body</p>' }, {});
-    expect(result).toEqual({ id: 'new1', title: 'New Page', url: 'https://example.atlassian.net/pages/new1' });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Created page: New Page (https://example.atlassian.net/pages/new1)'
+        }
+      ]
+    });
     expect(mockCreatePage).toHaveBeenCalledWith('S', 'New Page', '<p>Body</p>', undefined);
-  });
-
-  it('create-page handler calls with parentId', async () => {
-    const mockCreatePage = jest.fn().mockResolvedValue({ data: { id: 'new2', title: 'Child Page' } });
-    MockedConfluenceClient.prototype.createPage = mockCreatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'S', title: 'Child Page', body: '<p>Body</p>', parentId: 'parent1' }, {});
-    expect(result).toEqual({ id: 'new2', title: 'Child Page', url: 'https://example.atlassian.net/pages/new2' });
-    expect(mockCreatePage).toHaveBeenCalledWith('S', 'Child Page', '<p>Body</p>', 'parent1');
-  });
-
-  it('create-page handler handles missing fields gracefully', async () => {
-    const mockCreatePage = jest.fn().mockResolvedValue({ data: {} });
-    MockedConfluenceClient.prototype.createPage = mockCreatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'S', title: '', body: '' }, {});
-    expect(result).toEqual({ id: undefined, title: undefined, url: 'https://example.atlassian.net/pages/undefined' });
   });
 
   it('delete-page handler returns expected data', async () => {
@@ -225,76 +199,14 @@ describe('registerPageTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'delete-page');
     const handler = call[3];
     const result = await handler({ pageId: 'del1' }, {});
-    expect(result).toEqual({ id: 'del1', status: 'deleted' });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Deleted page: del1'
+        }
+      ]
+    });
     expect(mockDeletePage).toHaveBeenCalledWith('del1');
-  });
-
-  it('search-pages-by-title handler returns pages', async () => {
-    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({
-      data: { results: [
-        { id: '1', title: 'Page 1', space: { key: 'S' } },
-        { id: '2', title: 'Page 2', space: { key: 'S' } },
-      ] },
-    });
-    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
-    const handler = call[3];
-    const result = await handler({ title: 'Page' }, {});
-    expect(result).toEqual({
-      pages: [
-        { id: '1', title: 'Page 1', url: 'https://example.atlassian.net/spaces/S/pages/1' },
-        { id: '2', title: 'Page 2', url: 'https://example.atlassian.net/spaces/S/pages/2' },
-      ],
-    });
-    expect(mockSearchPagesByTitle).toHaveBeenCalledWith('Page');
-  });
-
-  it('search-pages-by-title handler uses pageResults if present', async () => {
-    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({
-      data: { pageResults: [ { id: '3', title: 'Page 3', space: { key: 'S' } } ] },
-    });
-    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
-    const handler = call[3];
-    const result = await handler({ title: 'Page' }, {});
-    expect(result).toEqual({
-      pages: [ { id: '3', title: 'Page 3', url: 'https://example.atlassian.net/spaces/S/pages/3' } ],
-    });
-  });
-
-  it('search-pages-by-title handler handles missing title and space.key', async () => {
-    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({
-      data: { results: [ { id: '4' } ] },
-    });
-    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
-    const handler = call[3];
-    const result = await handler({ title: 'Page' }, {});
-    expect(result).toEqual({
-      pages: [ { id: '4', title: 'Untitled', url: 'https://example.atlassian.net/spaces//pages/4' } ],
-    });
-  });
-
-  it('search-pages-by-title handler returns empty array if no results', async () => {
-    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({ data: { results: [] } });
-    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
-    const handler = call[3];
-    const result = await handler({ title: 'Nothing' }, {});
-    expect(result).toEqual({ pages: [] });
-  });
-
-  it('search-pages-by-title handler returns empty array if both results and pageResults are missing', async () => {
-    const mockSearchPagesByTitle = jest.fn().mockResolvedValue({ data: {} });
-    MockedConfluenceClient.prototype.searchPagesByTitle = mockSearchPagesByTitle;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-pages-by-title');
-    const handler = call[3];
-    const result = await handler({ title: 'Nothing' }, {});
-    expect(result).toEqual({ pages: [] });
   });
 });

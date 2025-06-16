@@ -11,7 +11,7 @@ export function jiraErrorHandler(error: any) {
     console.error('[Jira API Error]', {
       url: error.config?.url,
       status: error.response.status,
-      data: error.response.data,
+      data: JSON.stringify(error.response.data, null, 2),
     });
   } else {
     console.error('[Jira API Error]', error.message);

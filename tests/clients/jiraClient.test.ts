@@ -68,7 +68,7 @@ describe('jiraErrorHandler', () => {
     expect(spy).toHaveBeenCalledWith('[Jira API Error]', {
       url: '/rest/api/3/issue/404',
       status: 400,
-      data: 'Bad request',
+      data: '"Bad request"',
     });
     spy.mockRestore();
   });

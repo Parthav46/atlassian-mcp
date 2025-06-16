@@ -14,37 +14,22 @@ export function registerPageTools(server: any, config: any) {
       const format = bodyFormat || "storage";
       const response = await client.getPage(pageId, format);
       const page = response.data;
+      let url = page._links?.webui
+        ? `${config.baseUrl}/wiki${page._links.webui}`
+        : 'No link available';
       let content = "";
       if (format === "markdown") {
         content = page.body?.atlas_doc_format?.value || "";
       } else {
         content = page.body?.storage?.value || "";
       }
-      // Return only essential fields and the full content
       return {
-        id: page.id,
-        title: page.title,
-        url: `${config.baseUrl}/pages/${page.id}`,
-        content
-      };
-    }
-  );
-
-  server.tool(
-    "update-page",
-    "Update a Confluence page by ID",
-    { pageId: z.string().describe("Confluence page ID"), data: z.any().describe("Page update data") },
-    async (
-      { pageId, data }: { pageId: string; data: any },
-      _extra: any
-    ) => {
-      const client = new ConfluenceClient(config);
-      const response = await client.updatePage(pageId, data);
-      const page = response.data;
-      return {
-        id: page.id,
-        title: page.title,
-        status: page.status || "updated"
+        content: [
+          {
+            type: "text",
+            text: `Title: ${page.title || "Untitled"}\nURL: ${url}\n\n${content}`
+          }
+        ]
       };
     }
   );
@@ -59,12 +44,20 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
-      const children = (response.data.results || []).map((child: any) => ({
-        id: child.id,
-        title: child.title,
-        url: `${config.baseUrl}/pages/${child.id}`
-      }));
-      return { children };
+      const children = (response.data.results || []).map((child: any) => {
+        let url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
+        return `- ${child.title || "Untitled"}: ${url}`;
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: children.length
+              ? `Children:\n${children.join("\n")}`
+              : "No children found."
+          }
+        ]
+      };
     }
   );
 
@@ -78,11 +71,54 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.createPage(spaceId, title, body, parentId);
+      if (response.status !== 200 && response.status !== 201) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to create page: ${response.status} ${response.statusText}`
+            }
+          ]
+        };
+      }
+
+      const page = response.data;
+      const pageUrl = page._links && page._links.webui ? `${config.baseUrl}${page._links.webui}` : 'No link available';
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created page: ${page.title || "Untitled"} (${pageUrl})`
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    "update-page",
+    "Update a Confluence page by ID",
+    { 
+      pageId: z.string().describe("Confluence page ID"),
+      title: z.string().describe("Page title"),
+      body: z.string().describe("Page body (HTML or storage format)"),
+      version: z.number().describe("New version number for the page"),
+      status: z.string().optional().describe("Page status (default: current)")
+    },
+    async (
+      { pageId, title, body, version, status }: { pageId: string; title: string; body: string; version: number; status?: string },
+      _extra: any
+    ) => {
+      const client = new ConfluenceClient(config);
+      const response = await client.updatePage(pageId, { title, body, version, status });
       const page = response.data;
       return {
-        id: page.id,
-        title: page.title,
-        url: `${config.baseUrl}/pages/${page.id}`
+        content: [
+          {
+            type: "text",
+            text: `Updated page: ${page.title || "Untitled"} (ID: ${page.id}) Status: ${page.status || "updated"}`
+          }
+        ]
       };
     }
   );
@@ -97,30 +133,14 @@ export function registerPageTools(server: any, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       await client.deletePage(pageId);
-      return { id: pageId, status: "deleted" };
-    }
-  );
-
-  server.tool(
-    "search-pages-by-title",
-    "Search Confluence pages by title",
-    { title: z.string().describe("Page title") },
-    async (
-      { title }: { title: string },
-      _extra: any
-    ) => {
-      const client = new ConfluenceClient(config);
-      const response = await client.searchPagesByTitle(title);
-      const results = response.data.results || response.data.pageResults || [];
-      if (!results.length) {
-        return { pages: [] };
-      }
-      const pages = results.map((page: any) => ({
-        id: page.id,
-        title: page.title || "Untitled",
-        url: `${config.baseUrl}/spaces/${page.space?.key || ''}/pages/${page.id}`
-      }));
-      return { pages };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Deleted page: ${pageId}`
+          }
+        ]
+      };
     }
   );
 }
