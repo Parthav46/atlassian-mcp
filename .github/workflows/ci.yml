@@ -29,6 +29,7 @@ jobs:
       - name: Run tests with coverage and check threshold
         run: |
           set -o pipefail
+          touch coverage/coverage_output.txt
           npm run test:coverage 2>&1 | tee coverage/coverage_output.txt || echo "::warning ::Test coverage command failed!"
           
           COVERAGE=$(grep -E '^All files' coverage/coverage_output.txt | awk '{print $(NF-1)}' | tr -d '%')
