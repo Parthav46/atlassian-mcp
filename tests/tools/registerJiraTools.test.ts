@@ -57,7 +57,7 @@ describe('registerJiraTools', () => {
             'Status: To Do\n' +
             'Assignee: Alice\n' +
             'URL: https://example.atlassian.net/browse/JIRA-1\n' +
-            'Description: desc'
+            'Description:\ndesc\n'
         }
       ]
     });
@@ -86,6 +86,133 @@ describe('registerJiraTools', () => {
             'Status: \n' +
             'Assignee: Unassigned\n' +
             'URL: https://example.atlassian.net/browse/JIRA-7\n'
+        }
+      ]
+    });
+  });
+
+  it('get-jira-issue handler parses Atlassian doc format description and subtasks', async () => {
+    const mockGetIssue = jest.fn().mockResolvedValue({
+      data: {
+        key: 'JIRA-100',
+        fields: {
+          summary: 'Dummy summary',
+          status: { name: 'In Progress' },
+          assignee: { displayName: 'John Doe' },
+          description: {
+            type: 'doc',
+            version: 1,
+            content: [
+              { type: 'paragraph', content: [{ type: 'text', text: 'This is a dummy description.' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: 'Includes:' }] },
+              { type: 'orderedList', attrs: { order: 1 }, content: [
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First item' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second item' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Third item' }] }] }
+              ]}
+            ]
+          },
+          subtasks: [
+            {
+              key: 'JIRA-101',
+              fields: { summary: 'Dummy subtask 1', status: { name: 'Done' } }
+            },
+            {
+              key: 'JIRA-102',
+              fields: { summary: 'Dummy subtask 2', status: { name: 'In Progress' } }
+            }
+          ]
+        },
+      },
+    });
+    MockedJiraClient.prototype.getIssue = mockGetIssue;
+    registerJiraTools(server, config);
+    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    const handler = getIssueCall[3];
+    const result = await handler({ issueKey: 'JIRA-100' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text:
+            'Key: JIRA-100\n' +
+            'Summary: Dummy summary\n' +
+            'Status: In Progress\n' +
+            'Assignee: John Doe\n' +
+            'URL: https://example.atlassian.net/browse/JIRA-100\n' +
+            'Description:\n' +
+            'This is a dummy description.\n' +
+            'Includes:\n' +
+            '1. First item\n' +
+            '2. Second item\n' +
+            '3. Third item\n' +
+            'Subtasks:\n' +
+            '- [JIRA-101] Dummy subtask 1 (Done)\n' +
+            '- [JIRA-102] Dummy subtask 2 (In Progress)'
+        }
+      ]
+    });
+  });
+
+  it('get-jira-issue handler handles no description and no subtasks', async () => {
+    const mockGetIssue = jest.fn().mockResolvedValue({
+      data: {
+        key: 'JIRA-10',
+        fields: {
+          summary: 'No desc or subtasks',
+          status: { name: 'To Do' },
+          assignee: { displayName: 'Alice' },
+        },
+      },
+    });
+    MockedJiraClient.prototype.getIssue = mockGetIssue;
+    registerJiraTools(server, config);
+    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    const handler = getIssueCall[3];
+    const result = await handler({ issueKey: 'JIRA-10' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text:
+            'Key: JIRA-10\n' +
+            'Summary: No desc or subtasks\n' +
+            'Status: To Do\n' +
+            'Assignee: Alice\n' +
+            'URL: https://example.atlassian.net/browse/JIRA-10\n'
+        }
+      ]
+    });
+  });
+
+  it('get-jira-issue handler handles plain string description', async () => {
+    const mockGetIssue = jest.fn().mockResolvedValue({
+      data: {
+        key: 'JIRA-11',
+        fields: {
+          summary: 'Plain string desc',
+          status: { name: 'To Do' },
+          assignee: { displayName: 'Alice' },
+          description: 'Just a plain string description.',
+        },
+      },
+    });
+    MockedJiraClient.prototype.getIssue = mockGetIssue;
+    registerJiraTools(server, config);
+    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    const handler = getIssueCall[3];
+    const result = await handler({ issueKey: 'JIRA-11' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text:
+            'Key: JIRA-11\n' +
+            'Summary: Plain string desc\n' +
+            'Status: To Do\n' +
+            'Assignee: Alice\n' +
+            'URL: https://example.atlassian.net/browse/JIRA-11\n' +
+            'Description:\nJust a plain string description.\n'
         }
       ]
     });
