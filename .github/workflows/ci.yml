@@ -11,19 +11,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Set sanity status to pending
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'pending',
-              context: 'sanity',
-              description: 'Sanity check in progress...'
-            });
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -53,31 +40,3 @@ jobs:
             echo "::warning ::Test coverage is below 80%!"
           fi
         shell: bash
-
-      - name: Set sanity status to success
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'success',
-              context: 'sanity',
-              description: 'Sanity check passed!'
-            });
-
-      - name: Set sanity status to failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'failure',
-              context: 'sanity',
-              description: 'Sanity check failed!'
-            });
