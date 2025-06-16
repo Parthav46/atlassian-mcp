@@ -1,4 +1,4 @@
-import { registerJiraTools } from "./tools/jira/registerJiraTools";
+// import { registerJiraTools } from "./tools/jira/registerJiraTools";
 import { registerPageTools } from "./tools/confluence/registerPageTools";
 import { registerSpaceTools } from "./tools/confluence/registerSpaceTools";
 import { registerCqlTools } from "./tools/confluence/registerCqlTools";
@@ -30,5 +30,5 @@ export function registerTools(server: any) {
   registerPageTools(server, config);
   registerSpaceTools(server, config);
   registerCqlTools(server, config);
-  registerJiraTools(server, config);
+  // registerJiraTools(server, config);
 }
