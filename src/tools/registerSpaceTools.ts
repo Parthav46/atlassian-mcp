@@ -13,11 +13,19 @@ export function registerSpaceTools(server: any, config: any) {
       const client = new ConfluenceClient(config);
       const response = await client.getFolder(folderId);
       const folder = response.data;
+      const name = folder.name || folder.title || "undefined";
+      const url = folder._links?.webui
+        ? `${config.baseUrl}${folder._links.webui}`
+        : `${config.baseUrl}/folders/${folder.id}`;
+      const description = folder.description || "None";
+      const text = `Folder: ${name}\nID: ${folder.id}\nURL: ${url}\nDescription: ${description}`;
       return {
-        id: folder.id,
-        name: folder.name,
-        url: `${config.baseUrl}/folders/${folder.id}`,
-        description: folder.description || undefined
+        content: [
+          {
+            type: "text",
+            text
+          }
+        ]
       };
     }
   );
@@ -33,34 +41,55 @@ export function registerSpaceTools(server: any, config: any) {
       const client = new ConfluenceClient(config);
       const response = await client.getSpace(spaceId);
       const space = response.data;
+      const url = space._links?.webui
+        ? `${config.baseUrl}/wiki${space._links.webui}`
+        : `No link available`;
+      const text = `Space: ${space.name}\nKey: ${space.key}\nID: ${space.id}\nURL: ${url}\nDescription: ${space.description?.plain?.value || 'None'}`;
       return {
-        id: space.id,
-        key: space.key,
-        name: space.name,
-        url: `${config.baseUrl}/spaces/${space.key}`,
-        description: space.description?.plain?.value || undefined
+        content: [
+          {
+            type: "text",
+            text
+          }
+        ]
       };
     }
   );
 
   server.tool(
     "list-spaces",
-    "List all Confluence spaces",
-    { start: z.number().optional().describe("Start index"), limit: z.number().optional().describe("Page size limit") },
+    "List all Confluence spaces (optionally filter by keys)",
+    {
+      start: z.number().optional().describe("Start index"),
+      limit: z.number().optional().describe("Page size limit"),
+      keys: z.string().optional().describe("Filter by key(s), comma-separated")
+    },
     async (
-      { start, limit }: { start?: number; limit?: number },
+      { start, limit, keys }: { start?: number; limit?: number; keys?: string },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.listSpaces(start, limit);
+      const response = await client.listSpaces(start, limit, keys);
       const results = response.data.results || [];
-      const spaces = results.map((space: any) => ({
-        id: space.id,
-        key: space.key,
-        name: space.name,
-        url: `${config.baseUrl}/spaces/${space.key}`
-      }));
-      return { spaces };
+      if (!Array.isArray(results) || !results.length) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No spaces found."
+            }
+          ]
+        };
+      }
+      const lines = results.map((space: any) => `- ${space.name} (KEY: ${space.key}, ID: ${space.id}): ${config.baseUrl}/spaces/${space.key}`);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Spaces:\n${lines.join("\n")}`
+          }
+        ]
+      };
     }
   );
 
@@ -75,15 +104,31 @@ export function registerSpaceTools(server: any, config: any) {
       const client = new ConfluenceClient(config);
       const response = await client.getPagesFromSpace(spaceId, limit, cursor);
       const results = response.data.results || [];
-      if (!results.length) {
-        return { pages: [] };
+      if (!Array.isArray(results) || !results.length) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No pages found."
+            }
+          ]
+        };
       }
-      const pages = results.map((page: any) => ({
-        id: page.id,
-        title: page.title || "Untitled",
-        url: `${config.baseUrl}/spaces/${spaceId}/pages/${page.id}`
-      }));
-      return { pages };
+      const lines = results.map((page: any) => {
+        const title = page.title || "Untitled";
+        let url = page._links?.webui
+          ? `${config.baseUrl}/wiki${page._links.webui}`
+          : `${config.baseUrl}/wiki/spaces/${spaceId}/pages/${page.id}`;
+        return `- ${title}: ${url}`;
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Pages in space ${spaceId}:\n${lines.join("\n")}`
+          }
+        ]
+      };
     }
   );
 }

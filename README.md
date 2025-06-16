@@ -30,46 +30,45 @@ Follow these steps to set up the MCP server locally:
 3. **Configure environment:**
    - You can set configuration options using command-line arguments or environment variables:
      - `--base-url=<Confluence or Jira base URL>`
-     - `--user-token=<User token>`
+     - `--token=<User token>`
      - `--username=<Username>`
    - These arguments override environment variables if both are set.
 4. **Build the project:**
    ```sh
    npm run build
    ```
-5. **Create MCP JSON config for Copilot:**
+5. **Run the server using npx:**
+   ```sh
+   npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
+   ```
+   - You can also use environment variables instead of command-line arguments.
+
+6. **Create MCP JSON config for Copilot or Claude for Desktop:**
    - Create a file named `mcp.json` in your project root with the following content:
      ```json
      {
        "command": "npx",
        "type": "stdio",
        "args": [
-         "node",
-         "<Absolute path to Directory>/dist/index.js",
-         "--base-url=<Confluence or Jira base URL>",
-         "--user-token=<User token>",
-         "--username=<Username>"
-       ]
+         "atlassian-mcp"
+       ],
+       "env": {
+         "ATLASSIAN_BASE_URL": "<Your Jira Base URL>",
+         "ATLASSIAN_API_TOKEN": "<Your Atlassian API Token>",
+         "ATLASSIAN_USERNAME": "<Your Atlassian Username>"
+       }
      }
      ```
    - Replace the placeholders with your actual configuration values.
+   - This configuration works for both GitHub Copilot and Claude for Desktop.
 
-## Code Structure
+## Usage via npx (published package)
 
-The project is modularized for maintainability and clarity:
-- **src/index.ts**: Entry point for the MCP server (stdio transport).
-- **src/registerTools.ts**: Loads configuration and registers all tool modules with the server.
-- **src/clients/confluenceClient.ts**: Confluence API client (handles authentication and requests).
-- **src/clients/jiraClient.ts**: Jira API client (handles authentication and requests).
-- **src/tools/registerPageTools.ts**: Registers Confluence page-related tools (get, update, create, delete, search pages).
-- **src/tools/registerSpaceTools.ts**: Registers Confluence space and folder tools (get space, list spaces, get folder, get pages from space).
-- **src/tools/registerCqlTools.ts**: Registers advanced CQL search tools for Confluence.
-- **src/tools/registerJiraTools.ts**: Registers Jira issue tools (get, search, create, update, delete issues).
-- **config/confluence.ts**: Utility for extracting Confluence config from headers or environment.
+Once the package is published to npm, you can run the server directly without cloning or building:
 
-## Usage with Claude for Desktop
-- Add this server as an MCP server in your Claude for Desktop config.
-- The server communicates over stdio and exposes tools for Confluence and Jira operations.
+```sh
+npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
+```
 
 ## Scripts
 - `npm run build` — Compile TypeScript
@@ -81,6 +80,4 @@ The project is modularized for maintainability and clarity:
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
-
 This project was created entirely using GitHub Copilot with GPT-4.1.
-

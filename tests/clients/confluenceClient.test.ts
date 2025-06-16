@@ -5,7 +5,7 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('ConfluenceClient', () => {
-  const config = { baseUrl: 'https://example.atlassian.net', userToken: 'token', username: 'user' };
+  const config = { baseUrl: 'https://example.atlassian.net', token: 'token', username: 'user' };
   let client: ConfluenceClient;
 
   beforeEach(() => {
@@ -26,9 +26,15 @@ describe('ConfluenceClient', () => {
 
   it('should call axios.put for updatePage', async () => {
     mockedAxios.put.mockResolvedValue({ data: { id: '123', title: 'Updated' } });
-    const data = { title: 'Updated' };
+    const data = { title: 'Updated', body: '<p>Updated</p>', version: 2, status: 'current' };
     await client.updatePage('123', data);
-    expect(mockedAxios.put).toHaveBeenCalledWith('/wiki/api/v2/pages/123', data);
+    expect(mockedAxios.put).toHaveBeenCalledWith('/wiki/api/v2/pages/123', {
+      id: '123',
+      status: 'current',
+      title: 'Updated',
+      body: { representation: 'storage', value: '<p>Updated</p>' },
+      version: { number: 2 },
+    });
   });
 
   it('should call axios.get for getChildren', async () => {
@@ -66,12 +72,6 @@ describe('ConfluenceClient', () => {
     mockedAxios.delete.mockResolvedValue({ data: {} });
     await client.deletePage('delpage');
     expect(mockedAxios.delete).toHaveBeenCalledWith('/wiki/api/v2/pages/delpage');
-  });
-
-  it('should call axios.get for searchPagesByTitle', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { results: [] } });
-    await client.searchPagesByTitle('Test');
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/rest/api/content', { params: { title: 'Test' } });
   });
 
   it('should call axios.get for getPagesFromSpace', async () => {
@@ -125,7 +125,7 @@ describe('confluenceErrorHandler', () => {
     expect(spy).toHaveBeenCalledWith('[Confluence API Error]', {
       url: '/wiki/api/v2/pages/404',
       status: 404,
-      data: 'Not found',
+      data: '"Not found"',
     });
     spy.mockRestore();
   });

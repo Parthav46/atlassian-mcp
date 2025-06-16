@@ -5,7 +5,7 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('JiraClient', () => {
-  const config = { baseUrl: 'https://example.atlassian.net', userToken: 'token', username: 'user' };
+  const config = { baseUrl: 'https://example.atlassian.net', token: 'token', username: 'user' };
   let client: JiraClient;
 
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('jiraErrorHandler', () => {
     expect(spy).toHaveBeenCalledWith('[Jira API Error]', {
       url: '/rest/api/3/issue/404',
       status: 400,
-      data: 'Bad request',
+      data: '"Bad request"',
     });
     spy.mockRestore();
   });

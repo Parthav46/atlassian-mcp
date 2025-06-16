@@ -35,6 +35,7 @@ describe('registerSpaceTools', () => {
         key: 'SPACE',
         name: 'Space Name',
         description: { plain: { value: 'desc' } },
+        _links: { webui: '/spaces/SPACE' },
       },
     });
     MockedConfluenceClient.prototype.getSpace = mockGetSpace;
@@ -44,11 +45,12 @@ describe('registerSpaceTools', () => {
     const handler = getSpaceCall[3];
     const result = await handler({ spaceId: 'S1' }, {});
     expect(result).toEqual({
-      id: 'S1',
-      key: 'SPACE',
-      name: 'Space Name',
-      url: 'https://example.atlassian.net/spaces/SPACE',
-      description: 'desc',
+      content: [
+        {
+          type: 'text',
+          text: 'Space: Space Name\nKey: SPACE\nID: S1\nURL: https://example.atlassian.net/wiki/spaces/SPACE\nDescription: desc'
+        }
+      ]
     });
     expect(mockGetSpace).toHaveBeenCalledWith('S1');
   });
@@ -60,6 +62,7 @@ describe('registerSpaceTools', () => {
         key: 'SPACE2',
         name: 'Space 2',
         description: undefined,
+        _links: { webui: undefined },
       },
     });
     MockedConfluenceClient.prototype.getSpace = mockGetSpace;
@@ -68,11 +71,12 @@ describe('registerSpaceTools', () => {
     const handler = getSpaceCall[3];
     const result = await handler({ spaceId: 'S2' }, {});
     expect(result).toEqual({
-      id: 'S2',
-      key: 'SPACE2',
-      name: 'Space 2',
-      url: 'https://example.atlassian.net/spaces/SPACE2',
-      description: undefined,
+      content: [
+        {
+          type: 'text',
+          text: 'Space: Space 2\nKey: SPACE2\nID: S2\nURL: No link available\nDescription: None'
+        }
+      ]
     });
 
     // missing plain
@@ -82,15 +86,17 @@ describe('registerSpaceTools', () => {
         key: 'SPACE3',
         name: 'Space 3',
         description: {},
+        _links: { webui: undefined },
       },
     });
     const result2 = await handler({ spaceId: 'S3' }, {});
     expect(result2).toEqual({
-      id: 'S3',
-      key: 'SPACE3',
-      name: 'Space 3',
-      url: 'https://example.atlassian.net/spaces/SPACE3',
-      description: undefined,
+      content: [
+        {
+          type: 'text',
+          text: 'Space: Space 3\nKey: SPACE3\nID: S3\nURL: No link available\nDescription: None'
+        }
+      ]
     });
 
     // missing value
@@ -100,21 +106,23 @@ describe('registerSpaceTools', () => {
         key: 'SPACE4',
         name: 'Space 4',
         description: { plain: {} },
+        _links: { webui: undefined },
       },
     });
     const result3 = await handler({ spaceId: 'S4' }, {});
     expect(result3).toEqual({
-      id: 'S4',
-      key: 'SPACE4',
-      name: 'Space 4',
-      url: 'https://example.atlassian.net/spaces/SPACE4',
-      description: undefined,
+      content: [
+        {
+          type: 'text',
+          text: 'Space: Space 4\nKey: SPACE4\nID: S4\nURL: No link available\nDescription: None'
+        }
+      ]
     });
   });
 
   it('get-folder handler returns expected data', async () => {
     const mockGetFolder = jest.fn().mockResolvedValue({
-      data: { id: 'F1', name: 'Folder 1', description: 'desc' },
+      data: { id: 'F1', title: 'Folder 1', _links: { base: 'https://example.atlassian.net', webui: '/wiki/folders/F1' } },
     });
     MockedConfluenceClient.prototype.getFolder = mockGetFolder;
     registerSpaceTools(server, config);
@@ -122,7 +130,12 @@ describe('registerSpaceTools', () => {
     const handler = call[3];
     const result = await handler({ folderId: 'F1' }, {});
     expect(result).toEqual({
-      id: 'F1', name: 'Folder 1', url: 'https://example.atlassian.net/folders/F1', description: 'desc',
+      content: [
+        {
+          type: 'text',
+          text: 'Folder: Folder 1\nID: F1\nURL: https://example.atlassian.net/wiki/folders/F1\nDescription: None'
+        }
+      ]
     });
     expect(mockGetFolder).toHaveBeenCalledWith('F1');
   });
@@ -137,7 +150,12 @@ describe('registerSpaceTools', () => {
     const handler = call[3];
     const result = await handler({ folderId: 'F2' }, {});
     expect(result).toEqual({
-      id: 'F2', name: 'Folder 2', url: 'https://example.atlassian.net/folders/F2', description: undefined,
+      content: [
+        {
+          type: 'text',
+          text: 'Folder: Folder 2\nID: F2\nURL: https://example.atlassian.net/folders/F2\nDescription: None'
+        }
+      ]
     });
   });
 
@@ -154,12 +172,36 @@ describe('registerSpaceTools', () => {
     const handler = call[3];
     const result = await handler({ start: 0, limit: 2 }, {});
     expect(result).toEqual({
-      spaces: [
-        { id: 'S1', key: 'SPACE1', name: 'Space 1', url: 'https://example.atlassian.net/spaces/SPACE1' },
-        { id: 'S2', key: 'SPACE2', name: 'Space 2', url: 'https://example.atlassian.net/spaces/SPACE2' },
-      ],
+      content: [
+        {
+          type: 'text',
+          text: 'Spaces:\n- Space 1 (KEY: SPACE1, ID: S1): https://example.atlassian.net/spaces/SPACE1\n- Space 2 (KEY: SPACE2, ID: S2): https://example.atlassian.net/spaces/SPACE2'
+        }
+      ]
     });
-    expect(mockListSpaces).toHaveBeenCalledWith(0, 2);
+    expect(mockListSpaces).toHaveBeenCalledWith(0, 2, undefined);
+  });
+
+  it('list-spaces handler filters by keys', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({
+      data: { results: [
+        { id: 'SPACEID', key: 'S1', name: 'Sample Space' }
+      ] },
+    });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
+    registerSpaceTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    const handler = call[3];
+    const result = await handler({ keys: 'S1' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Spaces:\n- Sample Space (KEY: S1, ID: SPACEID): https://example.atlassian.net/spaces/S1'
+        }
+      ]
+    });
+    expect(mockListSpaces).toHaveBeenCalledWith(undefined, undefined, 'S1');
   });
 
   it('list-spaces handler returns empty array if no results', async () => {
@@ -169,7 +211,14 @@ describe('registerSpaceTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({}, {});
-    expect(result).toEqual({ spaces: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No spaces found.'
+        }
+      ]
+    });
   });
 
   it('list-spaces handler handles undefined results', async () => {
@@ -179,14 +228,21 @@ describe('registerSpaceTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({}, {});
-    expect(result).toEqual({ spaces: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No spaces found.'
+        }
+      ]
+    });
   });
 
   it('get-pages-from-space handler returns expected data', async () => {
     const mockGetPagesFromSpace = jest.fn().mockResolvedValue({
       data: { results: [
-        { id: 'P1', title: 'Page 1' },
-        { id: 'P2', title: 'Page 2' },
+        { id: 'P1', title: 'Page 1', _links: { webui: '/spaces/SPACE/pages/P1' } },
+        { id: 'P2', title: 'Page 2', _links: { webui: '/spaces/SPACE/pages/P2' } },
       ] },
     });
     MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
@@ -195,10 +251,12 @@ describe('registerSpaceTools', () => {
     const handler = call[3];
     const result = await handler({ spaceId: 'SPACE', limit: 2 }, {});
     expect(result).toEqual({
-      pages: [
-        { id: 'P1', title: 'Page 1', url: 'https://example.atlassian.net/spaces/SPACE/pages/P1' },
-        { id: 'P2', title: 'Page 2', url: 'https://example.atlassian.net/spaces/SPACE/pages/P2' },
-      ],
+      content: [
+        {
+          type: 'text',
+          text: 'Pages in space SPACE:\n- Page 1: https://example.atlassian.net/wiki/spaces/SPACE/pages/P1\n- Page 2: https://example.atlassian.net/wiki/spaces/SPACE/pages/P2'
+        }
+      ]
     });
     expect(mockGetPagesFromSpace).toHaveBeenCalledWith('SPACE', 2, undefined);
   });
@@ -213,7 +271,12 @@ describe('registerSpaceTools', () => {
     const handler = call[3];
     const result = await handler({ spaceId: 'SPACE', limit: 1 }, {});
     expect(result).toEqual({
-      pages: [ { id: 'P3', title: 'Untitled', url: 'https://example.atlassian.net/spaces/SPACE/pages/P3' } ],
+      content: [
+        {
+          type: 'text',
+          text: 'Pages in space SPACE:\n- Untitled: https://example.atlassian.net/wiki/spaces/SPACE/pages/P3'
+        }
+      ]
     });
   });
 
@@ -224,7 +287,14 @@ describe('registerSpaceTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
     const handler = call[3];
     const result = await handler({ spaceId: 'SPACE' }, {});
-    expect(result).toEqual({ pages: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No pages found.'
+        }
+      ]
+    });
   });
 
   it('get-pages-from-space handler handles undefined results', async () => {
@@ -234,6 +304,13 @@ describe('registerSpaceTools', () => {
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
     const handler = call[3];
     const result = await handler({ spaceId: 'SPACE' }, {});
-    expect(result).toEqual({ pages: [] });
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'No pages found.'
+        }
+      ]
+    });
   });
 });

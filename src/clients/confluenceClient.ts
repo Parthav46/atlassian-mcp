@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 
 export interface ConfluenceConfig {
   baseUrl: string;
-  userToken: string;
+  token: string;
   username: string;
 }
 
@@ -11,7 +11,7 @@ export function confluenceErrorHandler(error: any) {
     console.error('[Confluence API Error]', {
       url: error.config?.url,
       status: error.response.status,
-      data: error.response.data,
+      data: JSON.stringify(error.response.data, null, 2),
     });
   } else {
     console.error('[Confluence API Error]', error.message);
@@ -23,7 +23,7 @@ export class ConfluenceClient {
   private axios: AxiosInstance;
 
   constructor(config: ConfluenceConfig) {
-    const authString = Buffer.from(`${config.username}:${config.userToken}`).toString('base64');
+    const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
       headers: {
@@ -48,8 +48,15 @@ export class ConfluenceClient {
   }
 
   // Update a page by ID
-  async updatePage(pageId: string, data: any) {
-    return this.axios.put(`/wiki/api/v2/pages/${pageId}`, data);
+  async updatePage(pageId: string, data: { title: string; body: string; version: number; status?: string }) {
+    const payload: any = {
+      id: pageId,
+      status: data.status || 'current',
+      title: data.title,
+      body: { representation: 'storage', value: data.body },
+      version: { number: data.version },
+    };
+    return this.axios.put(`/wiki/api/v2/pages/${pageId}`, payload);
   }
 
   // List children of a page
@@ -67,11 +74,12 @@ export class ConfluenceClient {
     return this.axios.get(`/wiki/api/v2/spaces/${spaceId}`);
   }
 
-  // List all spaces
-  async listSpaces(start?: number, limit?: number) {
+  // List all spaces (optionally filter by key(s))
+  async listSpaces(start?: number, limit?: number, keys?: string) {
     const params: any = {};
     if (start !== undefined) params.start = start;
     if (limit !== undefined) params.limit = limit;
+    if (keys !== undefined) params.keys = keys;
     return this.axios.get(`/wiki/api/v2/spaces`, { params });
   }
 
@@ -79,6 +87,7 @@ export class ConfluenceClient {
   async createPage(spaceId: string, title: string, body: string, parentId?: string) {
     const data: any = {
       spaceId,
+      status: 'current',
       title,
       body: { representation: 'storage', value: body },
     };
@@ -91,12 +100,6 @@ export class ConfluenceClient {
   // Delete a page by ID
   async deletePage(pageId: string) {
     return this.axios.delete(`/wiki/api/v2/pages/${pageId}`);
-  }
-
-  // Search pages by title
-  async searchPagesByTitle(title: string) {
-    // Use the widely supported Confluence Cloud REST API endpoint
-    return this.axios.get(`/wiki/rest/api/content`, { params: { title } });
   }
 
   // Get pages from a space (Confluence v2 API)

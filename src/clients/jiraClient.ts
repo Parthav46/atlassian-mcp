@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 
 export interface JiraConfig {
   baseUrl: string;
-  userToken: string;
+  token: string;
   username: string;
 }
 
@@ -11,7 +11,7 @@ export function jiraErrorHandler(error: any) {
     console.error('[Jira API Error]', {
       url: error.config?.url,
       status: error.response.status,
-      data: error.response.data,
+      data: JSON.stringify(error.response.data, null, 2),
     });
   } else {
     console.error('[Jira API Error]', error.message);
@@ -23,7 +23,7 @@ export class JiraClient {
   private axios: AxiosInstance;
 
   constructor(config: JiraConfig) {
-    const authString = Buffer.from(`${config.username}:${config.userToken}`).toString('base64');
+    const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
       headers: {
