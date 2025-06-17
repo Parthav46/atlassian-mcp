@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-06-17
+### Changed
+- Refactored: Re-enabled previously disabled Jira tools in `registerJiraTools` and related server logic.
+- Fixed: Updated Confluence page URL construction to include `/wiki` prefix for correct page links.
+- Docs: Updated `README.md` for clarity, added explicit API token requirement, and improved setup instructions.
+- Chore: Bumped version to 0.1.3 in `package.json` and performed minor server code refactoring.
+
 ## [0.1.2] - 2025-06-16
 ### Added
 - Shebang added to `index.ts` for executable script support.
