@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { JiraClient } from "../../clients/jiraClient";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerJiraTools(server: any, config: any) {
+export function registerJiraTools(server: McpServer, config: any) {
   server.tool(
     "search-jira-issues",
     "Search Jira issues using JQL",
@@ -114,9 +115,27 @@ export function registerJiraTools(server: any, config: any) {
   server.tool(
     "create-jira-issue",
     "(WIP) Create a new Jira issue. This tool is a work in progress and may not be fully functional yet.",
-    { issueData: z.any().describe("Jira issue data (JSON)") },
+    {
+      issueData: z.object({
+        fields: z.object({
+          project: z.object({
+            key: z.string().describe("Project key")
+          }),
+          summary: z.string().describe("Issue summary"),
+          issuetype: z.object({
+            id: z.string().optional().describe("Issue type ID"),
+            name: z.string().optional().describe("Issue type name")
+          }),
+          description: z.string().optional().describe("Issue description"),
+          assignee: z.object({
+            id: z.string().optional(),
+            name: z.string().optional()
+          }).optional(),
+        })
+      }).describe("Jira issue data (JSON)")
+    },
     async (
-      { issueData }: { issueData: any },
+      { issueData }: { issueData: { fields: any } },
       _extra: any
     ) => {
       const client = new JiraClient(config);
@@ -134,14 +153,17 @@ export function registerJiraTools(server: any, config: any) {
         ]
       };
     }
-  );
+  ).disable(); // Disable this tool for now as it is a work in progress
 
   server.tool(
     "update-jira-issue",
     "(WIP) Update a Jira issue by key. This tool is a work in progress and may not be fully functional yet.",
-    { issueKey: z.string().describe("Jira issue key"), issueData: z.any().describe("Jira issue update data (JSON)") },
+    { 
+      issueKey: z.string().describe("Jira issue key"), 
+      issueData: z.any().describe("Jira issue update data (JSON)") 
+    },
     async (
-      { issueKey, issueData }: { issueKey: string; issueData: any },
+      { issueKey, issueData }: { issueKey: string; issueData?: any },
       _extra: any
     ) => {
       const client = new JiraClient(config);
@@ -158,7 +180,7 @@ export function registerJiraTools(server: any, config: any) {
         ]
       };
     }
-  );
+  ).disable(); // Disable this tool for now as it is a work in progress
 
   server.tool(
     "delete-jira-issue",

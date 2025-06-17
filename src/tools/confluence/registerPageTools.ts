@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerPageTools(server: any, config: any) {
+export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "get-page",
     "Get a Confluence page by ID (optionally specify content format: storage or markdown)",

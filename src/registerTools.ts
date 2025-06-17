@@ -2,6 +2,7 @@ import { registerJiraTools } from "./tools/jira/registerJiraTools";
 import { registerPageTools } from "./tools/confluence/registerPageTools";
 import { registerSpaceTools } from "./tools/confluence/registerSpaceTools";
 import { registerCqlTools } from "./tools/confluence/registerCqlTools";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
 function getAtlassianConfig() {
   // Use --base-url, --token, --username for both
@@ -25,7 +26,7 @@ function getAtlassianConfig() {
   return Object.freeze({ baseUrl, token, username });
 }
 
-export function registerTools(server: any) {
+export function registerTools(server: McpServer) {
   const config = getAtlassianConfig();
   registerPageTools(server, config);
   registerSpaceTools(server, config);
