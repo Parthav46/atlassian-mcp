@@ -153,7 +153,7 @@ export function registerJiraTools(server: McpServer, config: any) {
         ]
       };
     }
-  ).disable(); // Disable this tool for now as it is a work in progress
+  );
 
   server.tool(
     "update-jira-issue",
@@ -180,7 +180,7 @@ export function registerJiraTools(server: McpServer, config: any) {
         ]
       };
     }
-  ).disable(); // Disable this tool for now as it is a work in progress
+  );
 
   server.tool(
     "delete-jira-issue",
