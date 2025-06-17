@@ -83,7 +83,7 @@ export function registerPageTools(server: any, config: any) {
       }
 
       const page = response.data;
-      const pageUrl = page._links && page._links.webui ? `${config.baseUrl}${page._links.webui}` : 'No link available';
+      const pageUrl = page._links && page._links.webui ? `${config.baseUrl}/wiki${page._links.webui}` : 'No link available';
       return {
         content: [
           {
