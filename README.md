@@ -50,7 +50,7 @@ Follow these steps to set up the MCP server locally:
        "command": "npx",
        "type": "stdio",
        "args": [
-         "atlassian-mcp"
+         "atlassian-mcp@latest"
        ],
        "env": {
          "ATLASSIAN_BASE_URL": "<Your Jira Base URL>",
