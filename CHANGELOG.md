@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-06-17
+### Fixed
+- Path reference for `package.json` in `index.ts`
+
 ## [0.1.3] - 2025-06-17
 ### Changed
 - Refactored: Re-enabled previously disabled Jira tools in `registerJiraTools` and related server logic.

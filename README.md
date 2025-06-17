@@ -5,7 +5,7 @@ This project implements a Model Context Protocol (MCP) server for interacting wi
 ## Features
 - Get, update, and explore Confluence pages, folders, children, and spaces
 - Perform advanced searches using CQL (Confluence Query Language)
-- Interact with Jira issues (~~create, update, delete,~~ search)
+- Interact with Jira issues (~~create, update,~~ delete, search)
 - Designed for LLM integration (e.g., Claude for Desktop)
 
 ## Local Setup
