@@ -5,10 +5,16 @@ dotenv.config();
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./registerTools.js";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const pkg = JSON.parse(
+  readFileSync(join(__dirname, "..", "package.json"), "utf-8")
+);
 
 const server = new McpServer({
-  name: "confluence",
-  version: "1.0.0",
+  name: "atlassian",
+  version: pkg.version || "1.0.0",
   capabilities: {
     resources: {},
     tools: {},
@@ -20,7 +26,7 @@ registerTools(server);
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Confluence MCP Server running on stdio");
+  console.error("Atlassian MCP Server running on stdio");
 }
 
 main().catch((error) => {

@@ -1,13 +1,12 @@
-# Atlassian MCP Confluence Server
+# Atlassian MCP Server
 
-This project implements a Model Context Protocol (MCP) server for interacting with Atlassian Confluence and Jira via LLMs. It is designed for extensibility and supports multi-project Confluence access via request headers.
+This project implements a Model Context Protocol (MCP) server for interacting with Atlassian Confluence and Jira via LLMs.
 
 ## Features
 - Get, update, and explore Confluence pages, folders, children, and spaces
 - Perform advanced searches using CQL (Confluence Query Language)
-- ~~Interact with Jira issues (create, update, delete, search)~~
+- Interact with Jira issues (~~create, update, delete,~~ search)
 - Designed for LLM integration (e.g., Claude for Desktop)
-- Multi-project support via headers
 
 ## Local Setup
 
@@ -16,11 +15,12 @@ Follow these steps to set up the MCP server locally:
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18 or later recommended)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
+- API token for Atlassian. You can create on from [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 
 ### Steps
 1. **Clone the repository:**
    ```sh
-   git clone <repo-url>
+   git clone https://github.com/Parthav46/atlassian-mcp.git
    cd atlassian-mcp
    ```
 2. **Install dependencies:**
@@ -29,9 +29,9 @@ Follow these steps to set up the MCP server locally:
    ```
 3. **Configure environment:**
    - You can set configuration options using command-line arguments or environment variables:
-     - `--base-url=<Confluence or Jira base URL>`
-     - `--token=<User token>`
-     - `--username=<Username>`
+     - `--base-url <Confluence or Jira base URL>`
+     - `--token <User token>`
+     - `--username <Username>`
    - These arguments override environment variables if both are set.
 4. **Build the project:**
    ```sh
@@ -39,7 +39,7 @@ Follow these steps to set up the MCP server locally:
    ```
 5. **Run the server using npx:**
    ```sh
-   npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
+   npx atlassian-mcp --base-url <Confluence or Jira base URL> --token <User token> --username <Username>
    ```
    - You can also use environment variables instead of command-line arguments.
 
@@ -61,14 +61,6 @@ Follow these steps to set up the MCP server locally:
      ```
    - Replace the placeholders with your actual configuration values.
    - This configuration works for both GitHub Copilot and Claude for Desktop.
-
-## Usage via npx (published package)
-
-Once the package is published to npm, you can run the server directly without cloning or building:
-
-```sh
-npx atlassian-mcp --base-url=<Confluence or Jira base URL> --token=<User token> --username=<Username>
-```
 
 ## Scripts
 - `npm run build` — Compile TypeScript

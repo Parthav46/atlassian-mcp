@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerCqlTools(server: any, config: any) {
+export function registerCqlTools(server: McpServer, config: any) {
   server.tool(
     "confluence_search",
 

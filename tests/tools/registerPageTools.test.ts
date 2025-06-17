@@ -185,7 +185,7 @@ describe('registerPageTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Created page: New Page (https://example.atlassian.net/pages/new1)'
+          text: 'Created page: New Page (https://example.atlassian.net/wiki/pages/new1)'
         }
       ]
     });
