@@ -82,7 +82,7 @@ export function registerJiraTools(server: any, config: any) {
 
   server.tool(
     "get-jira-issue",
-    "Get a Jira issue by key",
+    "Get a Jira issue by key. Returns issue details including description and subtasks.",
     { issueKey: z.string().describe("Jira issue key") },
     async (
       { issueKey }: { issueKey: string },
@@ -113,7 +113,7 @@ export function registerJiraTools(server: any, config: any) {
 
   server.tool(
     "create-jira-issue",
-    "Create a new Jira issue",
+    "(WIP) Create a new Jira issue. This tool is a work in progress and may not be fully functional yet.",
     { issueData: z.any().describe("Jira issue data (JSON)") },
     async (
       { issueData }: { issueData: any },
@@ -138,7 +138,7 @@ export function registerJiraTools(server: any, config: any) {
 
   server.tool(
     "update-jira-issue",
-    "Update a Jira issue by key",
+    "(WIP) Update a Jira issue by key. This tool is a work in progress and may not be fully functional yet.",
     { issueKey: z.string().describe("Jira issue key"), issueData: z.any().describe("Jira issue update data (JSON)") },
     async (
       { issueKey, issueData }: { issueKey: string; issueData: any },
