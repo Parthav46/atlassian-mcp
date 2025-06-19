@@ -3,8 +3,10 @@
   "version": "0.1.5",
   "main": "dist/src/index.js",
   "scripts": {
-    "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test": "jest --testPathIgnorePatterns=tests/integration",
+    "test:integration": "jest tests/integration",
+    "test:coverage": "jest --coverage --testPathIgnorePatterns=tests/integration",
+    "test:integration:coverage": "jest --coverage tests/integration",
     "build": "tsc",
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts",
