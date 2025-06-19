@@ -41,13 +41,13 @@ export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "get-children",
     "Get children of a Confluence page by ID",
-    { pageId: z.string().describe("Confluence page ID") },
+    { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: string },
+      { pageId }: { pageId: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.getChildren(pageId);
+      const response = await client.getChildren(pageId.toString());
       const children = (response.data.results || []).map((child: any) => {
         let url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
         return `- ${child.title || "Untitled"}: ${url}`;

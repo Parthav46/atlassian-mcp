@@ -11,7 +11,7 @@ The project is organized for clarity and modularity:
   - **tools/**: Tool registration and logic modules
     - **confluence/**: Confluence-related tool registrations
       - **registerPageTools.ts**: Registers Confluence page-related tools (get, update, create, delete, search pages)
-      - **registerSpaceTools.ts**: Registers Confluence space and folder tools (get space, list spaces, get folder, get pages from space)
+      - **registerSpaceTools.ts**: Registers Confluence space and folder tools (get space, list spaces, get folder)
       - **registerCqlTools.ts**: Registers advanced CQL search tools for Confluence
     - **jira/**: Jira-related tool registrations
       - **registerJiraTools.ts**: Registers Jira issue tools (get, search, create, update, delete issues)
