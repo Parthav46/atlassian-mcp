@@ -12,7 +12,7 @@ export function registerSpaceTools(server: McpServer, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.getFolder(folderId.toString());
+      const response = await client.getFolder(folderId);
       const folder = response.data;
       const name = folder.name || folder.title || "undefined";
       const url = folder._links?.webui
@@ -40,7 +40,7 @@ export function registerSpaceTools(server: McpServer, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.getSpace(spaceId.toString());
+      const response = await client.getSpace(spaceId);
       const space = response.data;
       const url = space._links?.webui
         ? `${config.baseUrl}/wiki${space._links.webui}`

@@ -16,7 +16,7 @@ export function registerPageTools(server: McpServer, config: any) {
     ) => {
       const client = new ConfluenceClient(config);
       const format = bodyFormat || "storage";
-      const response = await client.getPage(pageId.toString(), format);
+      const response = await client.getPage(pageId, format);
       const page = response.data;
       let url = page._links?.webui
         ? `${config.baseUrl}/wiki${page._links.webui}`
@@ -47,7 +47,7 @@ export function registerPageTools(server: McpServer, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.getChildren(pageId.toString());
+      const response = await client.getChildren(pageId);
       const children = (response.data.results || []).map((child: any) => {
         let url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
         return `- ${child.title || "Untitled"}: ${url}`;
@@ -92,7 +92,7 @@ export function registerPageTools(server: McpServer, config: any) {
         };
       }
 
-      const response = await client.createPage(spaceId, title, body, parentId?.toString());
+      const response = await client.createPage(spaceId, title, body, parentId);
       if (response.status !== 200 && response.status !== 201) {
         return {
           content: [
@@ -132,7 +132,7 @@ export function registerPageTools(server: McpServer, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.updatePage(pageId.toString(), { title, body, version, status });
+      const response = await client.updatePage(pageId, { title, body, version, status });
       const page = response.data;
       return {
         content: [
@@ -154,7 +154,7 @@ export function registerPageTools(server: McpServer, config: any) {
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
-      await client.deletePage(pageId.toString());
+      await client.deletePage(pageId);
       return {
         content: [
           {
