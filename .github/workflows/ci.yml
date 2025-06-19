@@ -40,3 +40,6 @@ jobs:
             echo "::warning ::Test coverage is below 80%!"
           fi
         shell: bash
+
+      - name: Run integration tests
+        run: npm run test:integration
