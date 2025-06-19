@@ -1,4 +1,4 @@
-import { parseJiraDescription, parseJiraSubtasks } from '../../src/tools/jira/jiraUtils';
+import { parseJiraDescription, parseJiraSubtasks } from '../../../src/tools/jira/jiraUtils';
 
 describe('parseJiraDescription', () => {
   it('returns empty string for undefined/null/empty', () => {

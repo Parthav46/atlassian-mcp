@@ -1,7 +1,7 @@
-import { registerSpaceTools } from '../../src/tools/confluence/registerSpaceTools';
-import { ConfluenceClient } from '../../src/clients/confluenceClient';
+import { registerSpaceTools } from '../../../src/tools/confluence/registerSpaceTools';
+import { ConfluenceClient } from '../../../src/clients/confluenceClient';
 
-jest.mock('../../src/clients/confluenceClient');
+jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerSpaceTools', () => {
@@ -16,14 +16,13 @@ describe('registerSpaceTools', () => {
 
   it('registers all expected tools', () => {
     registerSpaceTools(server, config);
-    expect(server.tool).toHaveBeenCalledTimes(4);
+    expect(server.tool).toHaveBeenCalledTimes(3);
     const toolNames = server.tool.mock.calls.map((call: any[]) => call[0]);
     expect(toolNames).toEqual(
       expect.arrayContaining([
         'get-folder',
         'get-space',
-        'list-spaces',
-        'get-pages-from-space',
+        'list-spaces'
       ])
     );
   });
@@ -233,82 +232,6 @@ describe('registerSpaceTools', () => {
         {
           type: 'text',
           text: 'No spaces found.'
-        }
-      ]
-    });
-  });
-
-  it('get-pages-from-space handler returns expected data', async () => {
-    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({
-      data: { results: [
-        { id: 'P1', title: 'Page 1', _links: { webui: '/spaces/SPACE/pages/P1' } },
-        { id: 'P2', title: 'Page 2', _links: { webui: '/spaces/SPACE/pages/P2' } },
-      ] },
-    });
-    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'SPACE', limit: 2 }, {});
-    expect(result).toEqual({
-      content: [
-        {
-          type: 'text',
-          text: 'Pages in space SPACE:\n- Page 1: https://example.atlassian.net/wiki/spaces/SPACE/pages/P1\n- Page 2: https://example.atlassian.net/wiki/spaces/SPACE/pages/P2'
-        }
-      ]
-    });
-    expect(mockGetPagesFromSpace).toHaveBeenCalledWith('SPACE', 2, undefined);
-  });
-
-  it('get-pages-from-space handler handles missing title', async () => {
-    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({
-      data: { results: [ { id: 'P3' } ] },
-    });
-    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'SPACE', limit: 1 }, {});
-    expect(result).toEqual({
-      content: [
-        {
-          type: 'text',
-          text: 'Pages in space SPACE:\n- Untitled: https://example.atlassian.net/wiki/spaces/SPACE/pages/P3'
-        }
-      ]
-    });
-  });
-
-  it('get-pages-from-space handler returns empty array if no results', async () => {
-    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({ data: { results: [] } });
-    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'SPACE' }, {});
-    expect(result).toEqual({
-      content: [
-        {
-          type: 'text',
-          text: 'No pages found.'
-        }
-      ]
-    });
-  });
-
-  it('get-pages-from-space handler handles undefined results', async () => {
-    const mockGetPagesFromSpace = jest.fn().mockResolvedValue({ data: {} });
-    MockedConfluenceClient.prototype.getPagesFromSpace = mockGetPagesFromSpace;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-pages-from-space');
-    const handler = call[3];
-    const result = await handler({ spaceId: 'SPACE' }, {});
-    expect(result).toEqual({
-      content: [
-        {
-          type: 'text',
-          text: 'No pages found.'
         }
       ]
     });

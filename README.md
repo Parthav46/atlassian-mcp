@@ -43,8 +43,10 @@ Follow these steps to set up the MCP server locally:
    ```
    - You can also use environment variables instead of command-line arguments.
 
-6. **Create MCP JSON config for Copilot or Claude for Desktop:**
-   - Create a file named `mcp.json` in your project root with the following content:
+## MCP Server setup
+
+**Create MCP JSON config for Copilot or Claude for Desktop:**
+   - Add the following content to configure your MCP server:
      ```json
      {
        "command": "npx",
