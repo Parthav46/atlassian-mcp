@@ -2,8 +2,8 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./registerTools";
 import { readFileSync } from "fs";
 import { join } from "path";
