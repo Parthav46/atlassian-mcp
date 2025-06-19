@@ -6,9 +6,12 @@ export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "get-page",
     "Get a Confluence page by ID (optionally specify content format: storage or markdown)",
-    { pageId: z.string().describe("Confluence page ID"), bodyFormat: z.enum(["storage", "markdown"]).optional().describe("Content format: storage (default) or markdown") },
+    { 
+      pageId: z.number().describe("Confluence page ID"),
+      bodyFormat: z.enum(["storage", "markdown"]).optional().describe("Content format: storage (default) or markdown")
+    },
     async (
-      { pageId, bodyFormat }: { pageId: string; bodyFormat?: "storage" | "markdown" },
+      { pageId, bodyFormat }: { pageId: number; bodyFormat?: "storage" | "markdown" },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
@@ -38,9 +41,9 @@ export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "get-children",
     "Get children of a Confluence page by ID",
-    { pageId: z.string().describe("Confluence page ID") },
+    { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: string },
+      { pageId }: { pageId: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
@@ -65,12 +68,30 @@ export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "create-page",
     "Create a new Confluence page",
-    { spaceId: z.string().describe("Space ID"), title: z.string().describe("Page title"), body: z.string().describe("Page body (HTML or storage format)"), parentId: z.string().optional().describe("Parent page ID") },
+    {
+      spaceKey: z.string().describe("Space Key"),
+      title: z.string().describe("Page title"),
+      body: z.string().describe("Page body (HTML or storage format)"),
+      parentId: z.number().optional().describe("Parent page ID")
+    },
     async (
-      { spaceId, title, body, parentId }: { spaceId: string; title: string; body: string; parentId?: string },
+      { spaceKey, title, body, parentId }: { spaceKey: string; title: string; body: string; parentId?: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
+      const spacesResponse = await client.listSpaces(undefined, 1, spaceKey);
+      const spaceId = spacesResponse.data.results?.[0]?.id;
+      if (!spaceId) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Space with key "${spaceKey}" not found.`
+            }
+          ]
+        };
+      }
+
       const response = await client.createPage(spaceId, title, body, parentId);
       if (response.status !== 200 && response.status !== 201) {
         return {
@@ -100,14 +121,14 @@ export function registerPageTools(server: McpServer, config: any) {
     "update-page",
     "Update a Confluence page by ID",
     { 
-      pageId: z.string().describe("Confluence page ID"),
+      pageId: z.number().describe("Confluence page ID"),
       title: z.string().describe("Page title"),
       body: z.string().describe("Page body (HTML or storage format)"),
       version: z.number().describe("New version number for the page"),
       status: z.string().optional().describe("Page status (default: current)")
     },
     async (
-      { pageId, title, body, version, status }: { pageId: string; title: string; body: string; version: number; status?: string },
+      { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
@@ -127,9 +148,9 @@ export function registerPageTools(server: McpServer, config: any) {
   server.tool(
     "delete-page",
     "Delete a Confluence page by ID",
-    { pageId: z.string().describe("Confluence page ID") },
+    { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: string },
+      { pageId }: { pageId: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);

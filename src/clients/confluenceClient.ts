@@ -41,14 +41,14 @@ export class ConfluenceClient {
   }
 
   // Get a page by ID (with body, support for storage and markdown)
-  async getPage(pageId: string, bodyFormat: 'storage' | 'markdown' = 'storage') {
+  async getPage(pageId: number, bodyFormat: 'storage' | 'markdown' = 'storage') {
     // v2 API: use body-format param. For markdown, use 'atlas_doc_format' and convert to markdown if needed.
     const params: any = { 'body-format': bodyFormat === 'markdown' ? 'atlas_doc_format' : 'storage' };
     return this.axios.get(`/wiki/api/v2/pages/${pageId}`, { params });
   }
 
   // Update a page by ID
-  async updatePage(pageId: string, data: { title: string; body: string; version: number; status?: string }) {
+  async updatePage(pageId: number, data: { title: string; body: string; version: number; status?: string }) {
     const payload: any = {
       id: pageId,
       status: data.status || 'current',
@@ -60,17 +60,17 @@ export class ConfluenceClient {
   }
 
   // List children of a page
-  async getChildren(pageId: string) {
+  async getChildren(pageId: number) {
     return this.axios.get(`/wiki/api/v2/pages/${pageId}/children`);
   }
 
   // Get a folder by ID
-  async getFolder(folderId: string) {
+  async getFolder(folderId: number) {
     return this.axios.get(`/wiki/api/v2/folders/${folderId}`);
   }
 
   // Get a space by ID
-  async getSpace(spaceId: string) {
+  async getSpace(spaceId: number) {
     return this.axios.get(`/wiki/api/v2/spaces/${spaceId}`);
   }
 
@@ -84,7 +84,7 @@ export class ConfluenceClient {
   }
 
   // Create a new page
-  async createPage(spaceId: string, title: string, body: string, parentId?: string) {
+  async createPage(spaceId: number, title: string, body: string, parentId?: number) {
     const data: any = {
       spaceId,
       status: 'current',
@@ -98,16 +98,8 @@ export class ConfluenceClient {
   }
 
   // Delete a page by ID
-  async deletePage(pageId: string) {
+  async deletePage(pageId: number) {
     return this.axios.delete(`/wiki/api/v2/pages/${pageId}`);
-  }
-
-  // Get pages from a space (Confluence v2 API)
-  async getPagesFromSpace(spaceId: string, limit?: number, cursor?: string) {
-    const params: any = {};
-    if (limit !== undefined) params.limit = limit;
-    if (cursor !== undefined) params.cursor = cursor;
-    return this.axios.get(`/wiki/api/v2/spaces/${spaceId}/pages`, { params });
   }
 
   // Advanced search using CQL

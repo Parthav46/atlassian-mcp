@@ -1,7 +1,7 @@
-import { registerPageTools } from '../../src/tools/confluence/registerPageTools';
-import { ConfluenceClient } from '../../src/clients/confluenceClient';
+import { registerPageTools } from '../../../src/tools/confluence/registerPageTools';
+import { ConfluenceClient } from '../../../src/clients/confluenceClient';
 
-jest.mock('../../src/clients/confluenceClient');
+jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerPageTools', () => {
@@ -171,16 +171,41 @@ describe('registerPageTools', () => {
     });
   });
 
+  it('create-page handler breaks flow if space not found', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({
+      data: { results: [] },
+    });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
+    registerPageTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
+    const handler = call[3];
+    const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Space with key \"SPACE1\" not found.'
+        }
+      ]
+    });
+    expect(mockListSpaces).toHaveBeenCalledWith(undefined, 1, 'SPACE1');
+    expect(MockedConfluenceClient.prototype.createPage).not.toHaveBeenCalled();
+  });
+
   it('create-page handler returns expected data', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({
+      data: { results: [{ id: 123, key: 'SPACE1', name: 'Space 1' }] },
+    });
     const mockCreatePage = jest.fn().mockResolvedValue({
       status: 201,
       data: { id: 'new1', title: 'New Page', _links: { webui: '/pages/new1' } },
     });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
     MockedConfluenceClient.prototype.createPage = mockCreatePage;
     registerPageTools(server, config);
     const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
     const handler = call[3];
-    const result = await handler({ spaceId: 'S', title: 'New Page', body: '<p>Body</p>' }, {});
+    const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
     expect(result).toEqual({
       content: [
         {
@@ -189,7 +214,32 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockCreatePage).toHaveBeenCalledWith('S', 'New Page', '<p>Body</p>', undefined);
+    expect(mockCreatePage).toHaveBeenCalledWith(123, 'New Page', '<p>Body</p>', undefined);
+  });
+
+  it('create-page handler handles non-200/201 response gracefully', async () => {
+    const mockListSpaces = jest.fn().mockResolvedValue({
+      data: { results: [{ id: 123, key: 'SPACE1', name: 'Space 1' }] },
+    });
+    const mockCreatePage = jest.fn().mockResolvedValue({
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
+    MockedConfluenceClient.prototype.createPage = mockCreatePage;
+    registerPageTools(server, config);
+    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
+    const handler = call[3];
+    const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: 'Failed to create page: 400 Bad Request'
+        }
+      ]
+    });
+    expect(mockCreatePage).toHaveBeenCalledWith(123, 'New Page', '<p>Body</p>', undefined);
   });
 
   it('delete-page handler returns expected data', async () => {

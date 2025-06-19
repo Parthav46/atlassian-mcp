@@ -1,7 +1,7 @@
-import { registerJiraTools } from '../../src/tools/jira/registerJiraTools';
-import { JiraClient } from '../../src/clients/jiraClient';
+import { registerJiraTools } from '../../../src/tools/jira/registerJiraTools';
+import { JiraClient } from '../../../src/clients/jiraClient';
 
-jest.mock('../../src/clients/jiraClient');
+jest.mock('../../../src/clients/jiraClient');
 const MockedJiraClient = JiraClient as jest.MockedClass<typeof JiraClient>;
 
 describe('registerJiraTools', () => {

@@ -1,10 +1,12 @@
 {
   "name": "atlassian-mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "dist/src/index.js",
   "scripts": {
-    "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test": "jest --testPathIgnorePatterns=tests/integration",
+    "test:integration": "jest tests/integration",
+    "test:coverage": "jest --coverage --testPathIgnorePatterns=tests/integration",
+    "test:integration:coverage": "jest --coverage tests/integration",
     "build": "tsc",
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts",
@@ -21,6 +23,10 @@
   "description": "MCP server for Atlassian Confluence and Jira integration",
   "bin": {
     "atlassian-mcp": "dist/src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Parthav46/atlassian-mcp.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",

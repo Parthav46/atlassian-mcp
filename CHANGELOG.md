@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-06-19
+### Changed
+- Refactored unit tests for Confluence and Jira tools for improved clarity and maintainability.
+- Updated handling of `spaceId` and `pageId` to ensure they are not confused with space keys, improving LLM compatibility and data type safety.
+- Restructured `CODE_STRUCTURE.md` for improved clarity and organization.
+
 ## [0.1.4] - 2025-06-17
 ### Fixed
 - Path reference for `package.json` in `index.ts`

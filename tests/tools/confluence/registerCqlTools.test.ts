@@ -1,7 +1,7 @@
-import { registerCqlTools } from '../../src/tools/confluence/registerCqlTools';
-import { ConfluenceClient } from '../../src/clients/confluenceClient';
+import { registerCqlTools } from '../../../src/tools/confluence/registerCqlTools';
+import { ConfluenceClient } from '../../../src/clients/confluenceClient';
 
-jest.mock('../../src/clients/confluenceClient');
+jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerCqlTools', () => {

@@ -6,9 +6,9 @@ export function registerSpaceTools(server: McpServer, config: any) {
   server.tool(
     "get-folder",
     "Get a Confluence folder by ID",
-    { folderId: z.string().describe("Confluence folder ID") },
+    { folderId: z.number().describe("Confluence folder ID") },
     async (
-      { folderId }: { folderId: string },
+      { folderId }: { folderId: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
@@ -34,9 +34,9 @@ export function registerSpaceTools(server: McpServer, config: any) {
   server.tool(
     "get-space",
     "Get a Confluence space by ID",
-    { spaceId: z.string().describe("Confluence space ID") },
+    { spaceId: z.number().describe("Confluence space ID") },
     async (
-      { spaceId }: { spaceId: string },
+      { spaceId }: { spaceId: number },
       _extra: any
     ) => {
       const client = new ConfluenceClient(config);
@@ -88,45 +88,6 @@ export function registerSpaceTools(server: McpServer, config: any) {
           {
             type: "text",
             text: `Spaces:\n${lines.join("\n")}`
-          }
-        ]
-      };
-    }
-  );
-
-  server.tool(
-    "get-pages-from-space",
-    "Get pages from a Confluence space (v2 API)",
-    { spaceId: z.string().describe("Confluence space ID"), limit: z.number().optional().describe("Page size limit"), cursor: z.string().optional().describe("Pagination cursor") },
-    async (
-      { spaceId, limit, cursor }: { spaceId: string; limit?: number; cursor?: string },
-      _extra: any
-    ) => {
-      const client = new ConfluenceClient(config);
-      const response = await client.getPagesFromSpace(spaceId, limit, cursor);
-      const results = response.data.results || [];
-      if (!Array.isArray(results) || !results.length) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "No pages found."
-            }
-          ]
-        };
-      }
-      const lines = results.map((page: any) => {
-        const title = page.title || "Untitled";
-        let url = page._links?.webui
-          ? `${config.baseUrl}/wiki${page._links.webui}`
-          : `${config.baseUrl}/wiki/spaces/${spaceId}/pages/${page.id}`;
-        return `- ${title}: ${url}`;
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Pages in space ${spaceId}:\n${lines.join("\n")}`
           }
         ]
       };

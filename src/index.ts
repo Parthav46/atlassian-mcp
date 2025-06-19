@@ -4,7 +4,7 @@ dotenv.config();
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { registerTools } from "./registerTools.js";
+import { registerTools } from "./registerTools";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -22,6 +22,23 @@ const server = new McpServer({
 });
 
 registerTools(server);
+
+// Health request handler for integration testing
+if (process.env.MCP_HEALTH_ENABLED === '1') {
+  server.tool(
+    "health",
+    "Health check for integration testing",
+    {}, // No input schema needed for health check
+    async () => ({
+      content: [
+        {
+          type: "text",
+          text: "ok"
+        }
+      ]
+    })
+  );
+}
 
 async function main() {
   const transport = new StdioServerTransport();

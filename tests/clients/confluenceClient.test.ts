@@ -18,18 +18,18 @@ describe('ConfluenceClient', () => {
   });
 
   it('should call axios.get for getPage', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { id: '123', body: { storage: { value: '<p>Test</p>' } }, title: 'Test Page' } });
-    const result = await client.getPage('123');
+    mockedAxios.get.mockResolvedValue({ data: { id: 123, body: { storage: { value: '<p>Test</p>' } }, title: 'Test Page' } });
+    const result = await client.getPage(123);
     expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/pages/123', { params: { 'body-format': 'storage' } });
-    expect(result.data.id).toBe('123');
+    expect(result.data.id).toBe(123);
   });
 
   it('should call axios.put for updatePage', async () => {
-    mockedAxios.put.mockResolvedValue({ data: { id: '123', title: 'Updated' } });
+    mockedAxios.put.mockResolvedValue({ data: { id: 123, title: 'Updated' } });
     const data = { title: 'Updated', body: '<p>Updated</p>', version: 2, status: 'current' };
-    await client.updatePage('123', data);
+    await client.updatePage(123, data);
     expect(mockedAxios.put).toHaveBeenCalledWith('/wiki/api/v2/pages/123', {
-      id: '123',
+      id: 123,
       status: 'current',
       title: 'Updated',
       body: { representation: 'storage', value: '<p>Updated</p>' },
@@ -39,20 +39,20 @@ describe('ConfluenceClient', () => {
 
   it('should call axios.get for getChildren', async () => {
     mockedAxios.get.mockResolvedValue({ data: { results: [] } });
-    await client.getChildren('123');
+    await client.getChildren(123);
     expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/pages/123/children');
   });
 
   it('should call axios.get for getFolder', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { id: 'folder1' } });
-    await client.getFolder('folder1');
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/folders/folder1');
+    mockedAxios.get.mockResolvedValue({ data: { id: 1 } });
+    await client.getFolder(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/folders/1');
   });
 
   it('should call axios.get for getSpace', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { id: 'space1' } });
-    await client.getSpace('space1');
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/spaces/space1');
+    mockedAxios.get.mockResolvedValue({ data: { id: 1 } });
+    await client.getSpace(1);
+    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/spaces/1');
   });
 
   it('should call axios.get for listSpaces', async () => {
@@ -63,21 +63,14 @@ describe('ConfluenceClient', () => {
 
   it('should call axios.post for createPage', async () => {
     mockedAxios.post.mockResolvedValue({ data: { id: 'newpage' } });
-    const data = { spaceId: 'space1', title: 'New', body: '<p>Body</p>' };
-    await client.createPage('space1', 'New', '<p>Body</p>');
+    await client.createPage(1, 'New', '<p>Body</p>');
     expect(mockedAxios.post).toHaveBeenCalledWith('/wiki/api/v2/pages', expect.any(Object));
   });
 
   it('should call axios.delete for deletePage', async () => {
     mockedAxios.delete.mockResolvedValue({ data: {} });
-    await client.deletePage('delpage');
-    expect(mockedAxios.delete).toHaveBeenCalledWith('/wiki/api/v2/pages/delpage');
-  });
-
-  it('should call axios.get for getPagesFromSpace', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { results: [] } });
-    await client.getPagesFromSpace('space1', 5, 'cursor1');
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/spaces/space1/pages', { params: { limit: 5, cursor: 'cursor1' } });
+    await client.deletePage(123);
+    expect(mockedAxios.delete).toHaveBeenCalledWith('/wiki/api/v2/pages/123');
   });
 
   it('should call axios.get for searchWithCql', async () => {
@@ -88,10 +81,10 @@ describe('ConfluenceClient', () => {
 
   it('should call createPage with parentId', async () => {
     mockedAxios.post.mockResolvedValue({ data: { id: 'childpage' } });
-    await client.createPage('space1', 'Child', '<p>Body</p>', 'parent1');
+    await client.createPage(1, 'Child', '<p>Body</p>', 123);
     expect(mockedAxios.post).toHaveBeenCalledWith(
       '/wiki/api/v2/pages',
-      expect.objectContaining({ parentId: 'parent1' })
+      expect.objectContaining({ parentId: 123 })
     );
   });
 
@@ -99,12 +92,6 @@ describe('ConfluenceClient', () => {
     mockedAxios.get.mockResolvedValue({ data: { results: [] } });
     await client.listSpaces();
     expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/spaces', { params: {} });
-  });
-
-  it('should call getPagesFromSpace with only spaceId', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { results: [] } });
-    await client.getPagesFromSpace('space1');
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/spaces/space1/pages', { params: {} });
   });
 
   it('should call searchWithCql with only cql', async () => {
