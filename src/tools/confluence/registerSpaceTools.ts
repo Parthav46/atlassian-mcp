@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerSpaceTools(server: McpServer, config: any) {
+export function registerSpaceTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "get-folder",
     "Get a Confluence folder by ID",

@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerCqlTools(server: McpServer, config: any) {
+export function registerCqlTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "confluence_search",
-
     "Advanced Confluence search using CQL (Confluence Query Language)",
     { cql: z.string().describe("CQL query string"), limit: z.number().optional(), start: z.number().optional() },
     async (

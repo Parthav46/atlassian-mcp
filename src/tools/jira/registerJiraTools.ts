@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { JiraClient } from "../../clients/jiraClient";
+import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerJiraTools(server: McpServer, config: any) {
+export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "search-jira-issues",
     "Search Jira issues using JQL",

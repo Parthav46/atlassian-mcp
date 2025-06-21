@@ -1,10 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-
-export interface ConfluenceConfig {
-  baseUrl: string;
-  token: string;
-  username: string;
-}
+import { AtlassianConfig } from './atlassianConfig';
 
 export function confluenceErrorHandler(error: any) {
   if (error.response) {
@@ -22,7 +17,7 @@ export function confluenceErrorHandler(error: any) {
 export class ConfluenceClient {
   private axios: AxiosInstance;
 
-  constructor(config: ConfluenceConfig) {
+  constructor(config: AtlassianConfig) {
     const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,

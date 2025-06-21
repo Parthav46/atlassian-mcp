@@ -1,10 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-
-export interface JiraConfig {
-  baseUrl: string;
-  token: string;
-  username: string;
-}
+import { AtlassianConfig } from './atlassianConfig';
 
 export function jiraErrorHandler(error: any) {
   if (error.response) {
@@ -22,7 +17,7 @@ export function jiraErrorHandler(error: any) {
 export class JiraClient {
   private axios: AxiosInstance;
 
-  constructor(config: JiraConfig) {
+  constructor(config: AtlassianConfig) {
     const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
