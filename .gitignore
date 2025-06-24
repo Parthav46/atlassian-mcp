@@ -1,7 +1,5 @@
-# Node.js dependencies
+.husky/
 node_modules/
-
-# Build output
 dist/
 
 # Coverage reports
