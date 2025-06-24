@@ -9,8 +9,7 @@ export function registerSpaceTools(server: McpServer, config: AtlassianConfig): 
     "Get a Confluence folder by ID",
     { folderId: z.number().describe("Confluence folder ID") },
     async (
-      { folderId }: { folderId: number },
-      _extra: any
+      { folderId }: { folderId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getFolder(folderId);
@@ -37,8 +36,7 @@ export function registerSpaceTools(server: McpServer, config: AtlassianConfig): 
     "Get a Confluence space by ID",
     { spaceId: z.number().describe("Confluence space ID") },
     async (
-      { spaceId }: { spaceId: number },
-      _extra: any
+      { spaceId }: { spaceId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getSpace(spaceId);
@@ -67,8 +65,7 @@ export function registerSpaceTools(server: McpServer, config: AtlassianConfig): 
       keys: z.string().optional().describe("Filter by key(s), comma-separated")
     },
     async (
-      { start, limit, keys }: { start?: number; limit?: number; keys?: string },
-      _extra: any
+      { start, limit, keys }: { start?: number; limit?: number; keys?: string }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.listSpaces(start, limit, keys);

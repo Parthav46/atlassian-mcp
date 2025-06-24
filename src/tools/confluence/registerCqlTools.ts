@@ -9,8 +9,7 @@ export function registerCqlTools(server: McpServer, config: AtlassianConfig): vo
     "Advanced Confluence search using CQL (Confluence Query Language)",
     { cql: z.string().describe("CQL query string"), limit: z.number().optional(), start: z.number().optional() },
     async (
-      { cql, limit, start }: { cql: string; limit?: number; start?: number },
-      _extra: any
+      { cql, limit, start }: { cql: string; limit?: number; start?: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.searchWithCql(cql, limit, start);

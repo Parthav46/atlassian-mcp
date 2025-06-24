@@ -184,7 +184,7 @@ describe('registerPageTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Space with key \"SPACE1\" not found.'
+          text: 'Space with key "SPACE1" not found.'
         }
       ]
     });

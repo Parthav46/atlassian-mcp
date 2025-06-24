@@ -12,14 +12,13 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
       bodyFormat: z.enum(["storage", "markdown"]).optional().describe("Content format: storage (default) or markdown")
     },
     async (
-      { pageId, bodyFormat }: { pageId: number; bodyFormat?: "storage" | "markdown" },
-      _extra: any
+      { pageId, bodyFormat }: { pageId: number; bodyFormat?: "storage" | "markdown" }
     ) => {
       const client = new ConfluenceClient(config);
       const format = bodyFormat || "storage";
       const response = await client.getPage(pageId, format);
       const page = response.data;
-      let url = page._links?.webui
+      const url = page._links?.webui
         ? `${config.baseUrl}/wiki${page._links.webui}`
         : 'No link available';
       let content = "";
@@ -44,14 +43,15 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
     "Get children of a Confluence page by ID",
     { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: number },
-      _extra: any
+      { pageId }: { pageId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
-      const children = (response.data.results || []).map((child: any) => {
-        let url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
-        return `- ${child.title || "Untitled"}: ${url}`;
+      const children = (response.data.results || []).map((child: unknown) => {
+        // Type assertion for expected child structure
+        const c = child as { title?: string; spaceId?: string; id?: string };
+        const url = `${config.baseUrl}/wiki/spaces/${c.spaceId}/pages/${c.id}`;
+        return `- ${c.title || "Untitled"}: ${url}`;
       });
       return {
         content: [
@@ -76,8 +76,7 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
       parentId: z.number().optional().describe("Parent page ID")
     },
     async (
-      { spaceKey, title, body, parentId }: { spaceKey: string; title: string; body: string; parentId?: number },
-      _extra: any
+      { spaceKey, title, body, parentId }: { spaceKey: string; title: string; body: string; parentId?: number }
     ) => {
       const client = new ConfluenceClient(config);
       const spacesResponse = await client.listSpaces(undefined, 1, spaceKey);
@@ -129,8 +128,7 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
       status: z.string().optional().describe("Page status (default: current)")
     },
     async (
-      { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string },
-      _extra: any
+      { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.updatePage(pageId, { title, body, version, status });
@@ -151,8 +149,7 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
     "Delete a Confluence page by ID",
     { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: number },
-      _extra: any
+      { pageId }: { pageId: number }
     ) => {
       const client = new ConfluenceClient(config);
       await client.deletePage(pageId);

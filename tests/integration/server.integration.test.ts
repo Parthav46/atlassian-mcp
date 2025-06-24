@@ -1,5 +1,4 @@
 // Integration test for MCP server health endpoint over stdio
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import * as path from 'path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';

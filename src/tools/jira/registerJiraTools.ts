@@ -40,8 +40,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
         fieldsByKeys?: boolean;
         failFast?: boolean;
         reconcileIssues?: number[];
-      },
-      _extra: any
+      }
     ) => {
       const client = new JiraClient(config);
       const response = await client.searchIssues({
@@ -87,8 +86,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
     "Get a Jira issue by key. Returns issue details including description and subtasks.",
     { issueKey: z.string().describe("Jira issue key") },
     async (
-      { issueKey }: { issueKey: string },
-      _extra: any
+      { issueKey }: { issueKey: string }
     ) => {
       const client = new JiraClient(config);
       const response = await client.getIssue(issueKey);
@@ -136,8 +134,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
       }).describe("Jira issue data (JSON)")
     },
     async (
-      { issueData }: { issueData: { fields: any } },
-      _extra: any
+      { issueData }: { issueData: { fields: any } }
     ) => {
       const client = new JiraClient(config);
       const response = await client.createIssue(issueData);
@@ -164,8 +161,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
       issueData: z.any().describe("Jira issue update data (JSON)") 
     },
     async (
-      { issueKey, issueData }: { issueKey: string; issueData?: any },
-      _extra: any
+      { issueKey, issueData }: { issueKey: string; issueData?: any }
     ) => {
       const client = new JiraClient(config);
       const response = await client.updateIssue(issueKey, issueData);
@@ -188,8 +184,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
     "Delete a Jira issue by key",
     { issueKey: z.string().describe("Jira issue key") },
     async (
-      { issueKey }: { issueKey: string },
-      _extra: any
+      { issueKey }: { issueKey: string }
     ) => {
       const client = new JiraClient(config);
       await client.deleteIssue(issueKey);
