@@ -1,21 +1,27 @@
 import { registerCqlTools } from '../../../src/tools/confluence/registerCqlTools';
 import { ConfluenceClient } from '../../../src/clients/confluenceClient';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { AtlassianConfig } from '../../../src/clients/atlassianConfig';
 
 jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerCqlTools', () => {
-  let server: any;
-  let config: any;
+  let server: { tool: jest.Mock };
+  let config: AtlassianConfig;
 
   beforeEach(() => {
     server = { tool: jest.fn() };
-    config = { baseUrl: 'https://example.atlassian.net' };
+    config = {
+      baseUrl: 'https://example.atlassian.net',
+      token: 'test-token',
+      username: 'test-user',
+    };
     MockedConfluenceClient.mockClear();
   });
 
   it('registers all expected tools', () => {
-    registerCqlTools(server, config);
+    registerCqlTools(server as unknown as McpServer, config);
     expect(server.tool).toHaveBeenCalledTimes(1);
     expect(server.tool).toHaveBeenCalledWith(
       'confluence_search',
@@ -35,8 +41,8 @@ describe('registerCqlTools', () => {
       },
     });
     MockedConfluenceClient.prototype.searchWithCql = mockSearchWithCql;
-    registerCqlTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'confluence_search');
+    registerCqlTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'confluence_search');
     expect(call).toBeDefined();
     const handler = call[3];
     const result = await handler({ cql: 'type=page', limit: 2, start: 0 }, {});
@@ -57,8 +63,8 @@ describe('registerCqlTools', () => {
   it('confluence_search handler returns empty array if no results', async () => {
     const mockSearchWithCql = jest.fn().mockResolvedValue({ data: { results: [] } });
     MockedConfluenceClient.prototype.searchWithCql = mockSearchWithCql;
-    registerCqlTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'confluence_search');
+    registerCqlTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'confluence_search');
     const handler = call[3];
     const result = await handler({ cql: 'type=page', limit: 2, start: 0 }, {});
     expect(result).toEqual({
@@ -82,8 +88,8 @@ describe('registerCqlTools', () => {
       },
     });
     MockedConfluenceClient.prototype.searchWithCql = mockSearchWithCql;
-    registerCqlTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'confluence_search');
+    registerCqlTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'confluence_search');
     const handler = call[3];
     const result = await handler({ cql: 'type=page' }, {});
     expect(result).toEqual({

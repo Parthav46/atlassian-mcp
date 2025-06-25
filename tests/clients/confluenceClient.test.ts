@@ -1,5 +1,5 @@
 import { ConfluenceClient, confluenceErrorHandler } from '../../src/clients/confluenceClient';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -9,7 +9,7 @@ describe('ConfluenceClient', () => {
   let client: ConfluenceClient;
 
   beforeEach(() => {
-    mockedAxios.create.mockReturnValue(mockedAxios as any);
+    mockedAxios.create.mockReturnValue(mockedAxios as unknown as AxiosInstance);
     client = new ConfluenceClient(config);
   });
 

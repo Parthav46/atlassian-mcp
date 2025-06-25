@@ -1,3 +1,6 @@
+// Suppressing no-var-requires rule for this file as we need to mock modules using require
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 jest.mock('dotenv', () => ({ config: jest.fn() }));
 
 // Mock McpServer and StdioServerTransport so connect is always a jest.fn()
@@ -27,7 +30,7 @@ jest.mock('path', () => ({
 
 describe('index.ts', () => {
   let consoleErrorSpy: jest.SpyInstance;
-  let McpServer: any;
+  let McpServer: unknown;
 
   beforeEach(() => {
     jest.resetModules();
@@ -61,7 +64,7 @@ describe('index.ts', () => {
 
   it('main handles errors and exits', async () => {
     await jest.isolateModulesAsync(async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => { throw new Error('exit ' + code); }) as any);
+      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => { throw new Error('exit ' + code); }) as unknown as () => never);
       try {
         await import('../src/index');
       } catch (e) {
