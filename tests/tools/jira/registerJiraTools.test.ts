@@ -1,23 +1,29 @@
 import { registerJiraTools } from '../../../src/tools/jira/registerJiraTools';
 import { JiraClient } from '../../../src/clients/jiraClient';
+import { AtlassianConfig } from '../../../src/clients/atlassianConfig';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 jest.mock('../../../src/clients/jiraClient');
 const MockedJiraClient = JiraClient as jest.MockedClass<typeof JiraClient>;
 
 describe('registerJiraTools', () => {
-  let server: any;
-  let config: any;
+  let server: { tool: jest.Mock };
+  let config: AtlassianConfig;
 
   beforeEach(() => {
     server = { tool: jest.fn() };
-    config = { baseUrl: 'https://example.atlassian.net' };
+    config = {
+      baseUrl: 'https://example.atlassian.net',
+      token: 'dummy-token',
+      username: 'dummy-user'
+    };
     MockedJiraClient.mockClear();
   });
 
   it('registers all expected tools', () => {
-    registerJiraTools(server, config);
+    registerJiraTools(server as unknown as McpServer, config);
     expect(server.tool).toHaveBeenCalledTimes(5);
-    const toolNames = server.tool.mock.calls.map((call: any[]) => call[0]);
+    const toolNames = server.tool.mock.calls.map((call: unknown[]) => call[0]);
     expect(toolNames).toEqual(
       expect.arrayContaining([
         'get-jira-issue',
@@ -42,8 +48,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     expect(getIssueCall).toBeDefined();
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-1' }, {});
@@ -72,8 +78,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-7' }, {});
     expect(result).toEqual({
@@ -126,8 +132,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-100' }, {});
     expect(result).toEqual({
@@ -166,8 +172,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-10' }, {});
     expect(result).toEqual({
@@ -198,8 +204,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-11' }, {});
     expect(result).toEqual({
@@ -228,8 +234,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.searchIssues = mockSearchIssues;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'search-jira-issues');
     const handler = call[3];
     const result = await handler({ jql: 'project=TEST', maxResults: 2 }, {});
     expect(result).toEqual({
@@ -256,8 +262,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.searchIssues = mockSearchIssues;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'search-jira-issues');
     const handler = call[3];
     const result = await handler({ jql: 'project=TEST' }, {});
     expect(result).toEqual({
@@ -276,8 +282,8 @@ describe('registerJiraTools', () => {
   it('search-jira-issues handler returns empty array if no results', async () => {
     const mockSearchIssues = jest.fn().mockResolvedValue({ data: { issues: [] } });
     MockedJiraClient.prototype.searchIssues = mockSearchIssues;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'search-jira-issues');
     const handler = call[3];
     const result = await handler({ jql: 'project=NONE' }, {});
     expect(result).toEqual({
@@ -295,8 +301,8 @@ describe('registerJiraTools', () => {
       data: { key: 'JIRA-4', fields: { summary: 'Created' } },
     });
     MockedJiraClient.prototype.createIssue = mockCreateIssue;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'create-jira-issue');
     const handler = call[3];
     const result = await handler({ issueData: { fields: { summary: 'Created' } } }, {});
     expect(result).toEqual({
@@ -315,8 +321,8 @@ describe('registerJiraTools', () => {
       data: { key: 'JIRA-5', fields: { status: { name: 'updated' } } },
     });
     MockedJiraClient.prototype.updateIssue = mockUpdateIssue;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'update-jira-issue');
     const handler = call[3];
     const result = await handler({ issueKey: 'JIRA-5', issueData: { fields: { status: { name: 'updated' } } } }, {});
     expect(result).toEqual({
@@ -335,8 +341,8 @@ describe('registerJiraTools', () => {
       data: { key: 'JIRA-12', fields: {} },
     });
     MockedJiraClient.prototype.updateIssue = mockUpdateIssue;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'update-jira-issue');
     const handler = call[3];
     const result = await handler({ issueKey: 'JIRA-12', issueData: {} }, {});
     expect(result).toEqual({
@@ -362,8 +368,8 @@ describe('registerJiraTools', () => {
       },
     });
     MockedJiraClient.prototype.getIssue = mockGetIssue;
-    registerJiraTools(server, config);
-    const getIssueCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const getIssueCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-jira-issue');
     const handler = getIssueCall[3];
     const result = await handler({ issueKey: 'JIRA-13' }, {});
     expect(result).toEqual({
@@ -384,8 +390,8 @@ describe('registerJiraTools', () => {
   it('search-jira-issues handler handles undefined issues', async () => {
     const mockSearchIssues = jest.fn().mockResolvedValue({ data: {} });
     MockedJiraClient.prototype.searchIssues = mockSearchIssues;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'search-jira-issues');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'search-jira-issues');
     const handler = call[3];
     const result = await handler({ jql: 'project=NONE' }, {});
     expect(result).toEqual({
@@ -401,8 +407,8 @@ describe('registerJiraTools', () => {
   it('delete-jira-issue handler returns expected data', async () => {
     const mockDeleteIssue = jest.fn().mockResolvedValue({});
     MockedJiraClient.prototype.deleteIssue = mockDeleteIssue;
-    registerJiraTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'delete-jira-issue');
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'delete-jira-issue');
     const handler = call[3];
     const result = await handler({ issueKey: 'JIRA-6' }, {});
     expect(result).toEqual({
