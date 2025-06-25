@@ -1,5 +1,6 @@
 import { ConfluenceClient, confluenceErrorHandler } from '../../src/clients/confluenceClient';
 import axios, { AxiosInstance } from 'axios';
+import { UpdatePageRequest } from '../../src/clients/confluenceClient.type';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -19,22 +20,22 @@ describe('ConfluenceClient', () => {
 
   it('should call axios.get for getPage', async () => {
     mockedAxios.get.mockResolvedValue({ data: { id: 123, body: { storage: { value: '<p>Test</p>' } }, title: 'Test Page' } });
-    const result = await client.getPage(123);
-    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/pages/123', { params: { 'body-format': 'storage' } });
+    const result = await client.getPage({ id: '123'});
+    expect(mockedAxios.get).toHaveBeenCalledWith('/wiki/api/v2/pages/123', { data: { id: '123' } });
     expect(result.data.id).toBe(123);
   });
 
   it('should call axios.put for updatePage', async () => {
     mockedAxios.put.mockResolvedValue({ data: { id: 123, title: 'Updated' } });
-    const data = { title: 'Updated', body: '<p>Updated</p>', version: 2, status: 'current' };
-    await client.updatePage(123, data);
-    expect(mockedAxios.put).toHaveBeenCalledWith('/wiki/api/v2/pages/123', {
-      id: 123,
-      status: 'current',
+    const data: UpdatePageRequest = {
+      id: '123',
       title: 'Updated',
       body: { representation: 'storage', value: '<p>Updated</p>' },
       version: { number: 2 },
-    });
+      status: 'current'
+    };
+    await client.updatePage(123, data);
+    expect(mockedAxios.put).toHaveBeenCalledWith('/wiki/api/v2/pages/123', data);
   });
 
   it('should call axios.get for getChildren', async () => {
@@ -63,7 +64,7 @@ describe('ConfluenceClient', () => {
 
   it('should call axios.post for createPage', async () => {
     mockedAxios.post.mockResolvedValue({ data: { id: 'newpage' } });
-    await client.createPage(1, 'New', '<p>Body</p>');
+    await client.createPage({ spaceId: '1', title: 'New', body: { representation: 'storage', value: '<p>Body</p>' } });
     expect(mockedAxios.post).toHaveBeenCalledWith('/wiki/api/v2/pages', expect.any(Object));
   });
 
@@ -81,10 +82,10 @@ describe('ConfluenceClient', () => {
 
   it('should call createPage with parentId', async () => {
     mockedAxios.post.mockResolvedValue({ data: { id: 'childpage' } });
-    await client.createPage(1, 'Child', '<p>Body</p>', 123);
+    await client.createPage({ spaceId: '1', title: 'Child', body: { representation: 'storage', value: '<p>Body</p>' }, parentId: '123' });
     expect(mockedAxios.post).toHaveBeenCalledWith(
       '/wiki/api/v2/pages',
-      expect.objectContaining({ parentId: 123 })
+      expect.objectContaining({ parentId: '123' })
     );
   });
 

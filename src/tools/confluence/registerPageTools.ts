@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { GetPageRequest, UpdatePageRequest } from "../../clients/confluenceClient.type";
 
 export function registerPageTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
@@ -16,7 +17,11 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
     ) => {
       const client = new ConfluenceClient(config);
       const format = bodyFormat || "storage";
-      const response = await client.getPage(pageId, format);
+      const data: GetPageRequest = {
+        id: pageId.toString(),
+        "body-format": format === "markdown" ? "atlas_doc_format" : "storage"
+      }
+      const response = await client.getPage(data);
       const page = response.data;
       const url = page._links?.webui
         ? `${config.baseUrl}/wiki${page._links.webui}`
@@ -92,7 +97,15 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
         };
       }
 
-      const response = await client.createPage(spaceId, title, body, parentId);
+      const response = await client.createPage({
+        spaceId: spaceId.toString(),
+        title,
+        body: {
+          representation: "storage",
+          value: body
+        },
+        parentId: parentId ? parentId.toString() : undefined
+      });
       if (response.status !== 200 && response.status !== 201) {
         return {
           content: [
@@ -131,7 +144,19 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
       { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string }
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.updatePage(pageId, { title, body, version, status });
+      const data: UpdatePageRequest = {
+        id: pageId.toString(),
+        title,
+        body: {
+          representation: "storage",
+          value: body
+        },
+        version: {
+          number: version
+        },
+        status: status === "draft" ? "draft" : "current"
+      };
+      const response = await client.updatePage(pageId, data);
       const page = response.data;
       return {
         content: [

@@ -28,7 +28,7 @@ export function registerCqlTools(server: McpServer, config: AtlassianConfig): vo
         content: [
           {
             type: "text",
-            text: `Search Results (raw JSON):\n${JSON.stringify(results, null, 2)}`
+            text: `Search Results:\n${JSON.stringify(results, null, 2)}`
           }
         ]
       };

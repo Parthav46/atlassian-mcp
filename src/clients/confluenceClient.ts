@@ -1,6 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { AtlassianConfig } from './atlassianConfig';
+import type { CqlResult, CqlSearchParams, CreatePageRequest, GetPageRequest, Page, UpdatePageRequest } from './confluenceClient.type';
 
+// Suppressing lint as Confluence API error handler param is defined as any
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function confluenceErrorHandler(error: any) {
   if (error.response) {
     console.error('[Confluence API Error]', {
@@ -35,30 +38,6 @@ export class ConfluenceClient {
     );
   }
 
-  // Get a page by ID (with body, support for storage and markdown)
-  async getPage(pageId: number, bodyFormat: 'storage' | 'markdown' = 'storage') {
-    // v2 API: use body-format param. For markdown, use 'atlas_doc_format' and convert to markdown if needed.
-    const params: any = { 'body-format': bodyFormat === 'markdown' ? 'atlas_doc_format' : 'storage' };
-    return this.axios.get(`/wiki/api/v2/pages/${pageId}`, { params });
-  }
-
-  // Update a page by ID
-  async updatePage(pageId: number, data: { title: string; body: string; version: number; status?: string }) {
-    const payload: any = {
-      id: pageId,
-      status: data.status || 'current',
-      title: data.title,
-      body: { representation: 'storage', value: data.body },
-      version: { number: data.version },
-    };
-    return this.axios.put(`/wiki/api/v2/pages/${pageId}`, payload);
-  }
-
-  // List children of a page
-  async getChildren(pageId: number) {
-    return this.axios.get(`/wiki/api/v2/pages/${pageId}/children`);
-  }
-
   // Get a folder by ID
   async getFolder(folderId: number) {
     return this.axios.get(`/wiki/api/v2/folders/${folderId}`);
@@ -71,25 +50,31 @@ export class ConfluenceClient {
 
   // List all spaces (optionally filter by key(s))
   async listSpaces(start?: number, limit?: number, keys?: string) {
-    const params: any = {};
+    const params: { start?: number; limit?: number; keys?: string } = {};
     if (start !== undefined) params.start = start;
     if (limit !== undefined) params.limit = limit;
     if (keys !== undefined) params.keys = keys;
     return this.axios.get(`/wiki/api/v2/spaces`, { params });
   }
 
+  // List children of a page
+  async getChildren(pageId: number) {
+    return this.axios.get(`/wiki/api/v2/pages/${pageId}/children`);
+  }
+
+  // Get a page by ID (with body, support for storage and markdown)
+  async getPage(data: GetPageRequest) {
+    return this.axios.get<Page>(`/wiki/api/v2/pages/${data.id}`, { data });
+  }
+
   // Create a new page
-  async createPage(spaceId: number, title: string, body: string, parentId?: number) {
-    const data: any = {
-      spaceId,
-      status: 'current',
-      title,
-      body: { representation: 'storage', value: body },
-    };
-    if (parentId) {
-      data.parentId = parentId;
-    }
-    return this.axios.post(`/wiki/api/v2/pages`, data);
+  async createPage(data: CreatePageRequest) {
+    return this.axios.post<Page>(`/wiki/api/v2/pages`, data);
+  }
+
+  // Update a page by ID
+  async updatePage(pageId: number, data: UpdatePageRequest) {
+    return this.axios.put<Page>(`/wiki/api/v2/pages/${pageId}`, data);
   }
 
   // Delete a page by ID
@@ -99,9 +84,9 @@ export class ConfluenceClient {
 
   // Advanced search using CQL
   async searchWithCql(cql: string, limit?: number, start?: number) {
-    const params: any = { cql };
+    const params: CqlSearchParams = { cql };
     if (limit !== undefined) params.limit = limit;
     if (start !== undefined) params.start = start;
-    return this.axios.get(`/wiki/rest/api/content/search`, { params });
+    return this.axios.get<CqlResult>(`/wiki/rest/api/content/search`, { params });
   }
 }

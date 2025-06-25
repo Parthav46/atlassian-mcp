@@ -50,7 +50,7 @@ describe('registerCqlTools', () => {
       content: [
         {
           type: 'text',
-          text: `Search Results (raw JSON):\n${JSON.stringify([
+          text: `Search Results:\n${JSON.stringify([
             { id: '1', title: 'Page 1', _links: { webui: '/spaces/SPACE/pages/1' } },
             { id: '2', title: 'Page 2', _links: { webui: '/spaces/SPACE/pages/2' } },
           ], null, 2)}`
@@ -96,7 +96,7 @@ describe('registerCqlTools', () => {
       content: [
         {
           type: 'text',
-          text: `Search Results (raw JSON):\n${JSON.stringify([
+          text: `Search Results:\n${JSON.stringify([
             { id: '3', _links: {} },
             { id: '4', title: undefined },
             { id: '5', title: '', _links: undefined },
