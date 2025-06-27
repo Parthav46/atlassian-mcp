@@ -80,7 +80,7 @@ export function registerSpaceTools(server: McpServer, config: AtlassianConfig): 
           ]
         };
       }
-      const lines = results.map((space: any) => `- ${space.name} (KEY: ${space.key}, ID: ${space.id}): ${config.baseUrl}/spaces/${space.key}`);
+      const lines = results.map((space) => `- ${space.name} (KEY: ${space.key}, ID: ${space.id}): ${config.baseUrl}/spaces/${space.key}`);
       return {
         content: [
           {

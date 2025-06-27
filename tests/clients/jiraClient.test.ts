@@ -32,14 +32,26 @@ describe('JiraClient', () => {
 
   it('should call axios.post for createIssue', async () => {
     mockedAxios.post.mockResolvedValue({ data: { key: 'TEST-2' } });
-    const data = { fields: { summary: 'Test', project: { key: 'TEST' } } };
+    const data = { 
+      fields: { 
+        summary: 'Test', 
+        project: { id: 'TEST' },
+        issuetype: { id: '10001' }
+      } 
+    };
     await client.createIssue(data);
     expect(mockedAxios.post).toHaveBeenCalledWith('/rest/api/3/issue', data);
   });
 
   it('should call axios.put for updateIssue', async () => {
     mockedAxios.put.mockResolvedValue({ data: { key: 'TEST-3' } });
-    const data = { fields: { summary: 'Updated' } };
+    const data = { 
+      fields: { 
+        summary: 'Updated',
+        project: { id: 'TEST' },
+        issuetype: { id: '10001' }
+      } 
+    };
     await client.updateIssue('TEST-3', data);
     expect(mockedAxios.put).toHaveBeenCalledWith('/rest/api/3/issue/TEST-3', data);
   });

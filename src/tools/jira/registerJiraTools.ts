@@ -3,7 +3,7 @@ import { JiraClient } from "../../clients/jiraClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { JqlSearchParams } from "../../types/jiraClient.type";
+import { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
 
 export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
@@ -94,23 +94,26 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
       issueData: z.object({
         fields: z.object({
           project: z.object({
-            key: z.string().describe("Project key")
+            id: z.string().describe("Project ID")
           }),
-          summary: z.string().describe("Issue summary"),
-          issuetype: z.object({
-            id: z.string().optional().describe("Issue type ID"),
-            name: z.string().optional().describe("Issue type name")
-          }),
-          description: z.string().optional().describe("Issue description"),
-          assignee: z.object({
-            id: z.string().optional(),
-            name: z.string().optional()
+          parent: z.object({
+            key: z.string().describe("Parent issue key")
           }).optional(),
-        })
-      }).describe("Jira issue data (JSON)")
+          summary: z.string().describe("Issue summary"),
+          description: z.object({
+            type: z.string().describe("Content type (e.g., 'doc')"),
+            content: z.array(z.any()).optional().describe("ADF content array"),
+            version: z.number().optional().describe("ADF version")
+          }).optional().describe("Issue description in ADF format"),
+          issuetype: z.object({
+            id: z.string().describe("Issue type ID")
+          }),
+        }).passthrough().describe("Issue fields - additional fields can be passed"),
+        update: z.object({}).optional().describe("Update operations"),
+      }).passthrough().describe("Jira issue data (JSON)")
     },
     async (
-      { issueData }: { issueData: { fields: any } }
+      { issueData }: { issueData: JiraIssueRequest }
     ) => {
       const client = new JiraClient(config);
       const response = await client.createIssue(issueData);
@@ -121,7 +124,6 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             type: "text",
             text:
               `Created issue: ${issue.key}\n` +
-              `Summary: ${issue.fields?.summary || ""}\n` +
               `URL: ${config.baseUrl}/browse/${issue.key}`
           }
         ]
@@ -134,21 +136,38 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
     "(WIP) Update a Jira issue by key. This tool is a work in progress and may not be fully functional yet.",
     { 
       issueKey: z.string().describe("Jira issue key"), 
-      issueData: z.any().describe("Jira issue update data (JSON)") 
+      issueData: z.object({
+        fields: z.object({
+          project: z.object({
+            id: z.string().describe("Project ID")
+          }),
+          parent: z.object({
+            key: z.string().describe("Parent issue key")
+          }).optional(),
+          summary: z.string().describe("Issue summary"),
+          description: z.object({
+            type: z.string().describe("Content type (e.g., 'doc')"),
+            content: z.array(z.any()).optional().describe("ADF content array"),
+            version: z.number().optional().describe("ADF version")
+          }).optional().describe("Issue description in ADF format"),
+          issuetype: z.object({
+            id: z.string().describe("Issue type ID")
+          }),
+        }).passthrough().describe("Issue fields - additional fields can be passed"),
+        update: z.object({}).optional().describe("Update operations"),
+      }).passthrough().describe("Jira issue data (JSON)")
     },
     async (
-      { issueKey, issueData }: { issueKey: string; issueData?: any }
+      { issueKey, issueData }: { issueKey: string; issueData: JiraIssueRequest }
     ) => {
       const client = new JiraClient(config);
-      const response = await client.updateIssue(issueKey, issueData);
-      const issue = response.data;
+      
+      await client.updateIssue(issueKey, issueData);
       return {
         content: [
           {
             type: "text",
-            text:
-              `Updated issue: ${issue.key}\n` +
-              `Status: ${issue.fields?.status?.name || "updated"}`
+            text: `Updated issue: ${issueKey}`
           }
         ]
       };

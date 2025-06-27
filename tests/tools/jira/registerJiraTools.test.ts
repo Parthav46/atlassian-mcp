@@ -388,7 +388,7 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Created issue: JIRA-4\nSummary: Created\nURL: https://example.atlassian.net/browse/JIRA-4'
+          text: 'Created issue: JIRA-4\nURL: https://example.atlassian.net/browse/JIRA-4'
         }
       ]
     });
@@ -408,7 +408,7 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Updated issue: JIRA-5\nStatus: updated'
+          text: 'Updated issue: JIRA-5'
         }
       ]
     });
@@ -428,7 +428,7 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text: 'Updated issue: JIRA-12\nStatus: updated'
+          text: 'Updated issue: JIRA-12'
         }
       ]
     });

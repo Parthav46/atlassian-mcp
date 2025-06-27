@@ -1,7 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { AtlassianConfig } from './atlassianConfig';
-import type { JqlResult, JqlSearchParams } from '../types/jiraClient.type';
+import type { CreateJiraIssueResponse, JiraIssueRequest, JqlResult, JqlSearchParams } from '../types/jiraClient.type';
 
+// Suppressing lint as Confluence API error handler param is defined as any
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function jiraErrorHandler(error: any) {
   if (error.response) {
     console.error('[Jira API Error]', {
@@ -47,12 +49,12 @@ export class JiraClient {
   }
 
   // Create a Jira issue
-  async createIssue(issueData: any) {
-    return this.axios.post(`/rest/api/3/issue`, issueData);
+  async createIssue(issueData: JiraIssueRequest) {
+    return this.axios.post<CreateJiraIssueResponse>(`/rest/api/3/issue`, issueData);
   }
 
   // Update a Jira issue
-  async updateIssue(issueKey: string, issueData: any) {
+  async updateIssue(issueKey: string, issueData: JiraIssueRequest) {
     return this.axios.put(`/rest/api/3/issue/${issueKey}`, issueData);
   }
 
