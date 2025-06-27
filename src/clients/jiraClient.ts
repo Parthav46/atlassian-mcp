@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { AtlassianConfig } from './atlassianConfig';
+import type { JqlResult, JqlSearchParams } from '../types/jiraClient.type';
 
 export function jiraErrorHandler(error: any) {
   if (error.response) {
@@ -36,37 +37,8 @@ export class JiraClient {
   }
 
   // Search Jira issues (JQL)
-  async searchIssues({
-    jql,
-    nextPageToken,
-    maxResults,
-    fields,
-    expand,
-    properties,
-    fieldsByKeys,
-    failFast,
-    reconcileIssues
-  }: {
-    jql: string;
-    nextPageToken?: string;
-    maxResults?: number;
-    fields?: string[];
-    expand?: string;
-    properties?: string[];
-    fieldsByKeys?: boolean;
-    failFast?: boolean;
-    reconcileIssues?: number[];
-  }) {
-    const params: Record<string, any> = { jql };
-    if (nextPageToken) params.nextPageToken = nextPageToken;
-    if (typeof maxResults === 'number') params.maxResults = maxResults;
-    if (fields && fields.length) params.fields = fields.join(',');
-    if (expand) params.expand = expand;
-    if (properties && properties.length) params.properties = properties.join(',');
-    if (typeof fieldsByKeys === 'boolean') params.fieldsByKeys = fieldsByKeys;
-    if (typeof failFast === 'boolean') params.failFast = failFast;
-    if (reconcileIssues && reconcileIssues.length) params.reconcileIssues = reconcileIssues.join(',');
-    return this.axios.get(`/rest/api/3/search/jql`, { params });
+  async searchIssues(data: JqlSearchParams) {
+    return this.axios.get<JqlResult>(`/rest/api/3/search/jql`, { data });
   }
 
   // Get a Jira issue by key

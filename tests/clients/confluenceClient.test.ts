@@ -1,6 +1,6 @@
 import { ConfluenceClient, confluenceErrorHandler } from '../../src/clients/confluenceClient';
 import axios, { AxiosInstance } from 'axios';
-import { UpdatePageRequest } from '../../src/clients/confluenceClient.type';
+import { UpdatePageRequest } from '../../src/types/confluenceClient.type';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

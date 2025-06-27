@@ -3,6 +3,7 @@ import { JiraClient } from "../../clients/jiraClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { JqlSearchParams } from "../../types/jiraClient.type";
 
 export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
@@ -20,47 +21,22 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
       reconcileIssues: z.array(z.number()).optional().describe("Strong consistency issue IDs to be reconciled with search results. Accepts up to 50 IDs.")
     },
     async (
-      {
-        jql,
-        nextPageToken,
-        maxResults,
-        fields,
-        expand,
-        properties,
-        fieldsByKeys,
-        failFast,
-        reconcileIssues
-      }: {
-        jql: string;
-        nextPageToken?: string;
-        maxResults?: number;
-        fields?: string[];
-        expand?: string;
-        properties?: string[];
-        fieldsByKeys?: boolean;
-        failFast?: boolean;
-        reconcileIssues?: number[];
-      }
+      data: JqlSearchParams
     ) => {
       const client = new JiraClient(config);
-      const response = await client.searchIssues({
-        jql,
-        nextPageToken,
-        maxResults,
-        fields,
-        expand,
-        properties,
-        fieldsByKeys,
-        failFast,
-        reconcileIssues
-      });
+
+      if (!data.fields || data.fields.length === 0) {
+        data.fields = ["summary", "status", "assignee", "description"];
+      }
+
+      const response = await client.searchIssues(data);
       const issues = response.data.issues || [];
-      if (issues.length === 0) {
+      if (!issues.length) {
         return {
           content: [
             {
               type: "text",
-              text: "No issues found."
+              text: "No issues found for the given JQL query."
             }
           ]
         };
@@ -69,12 +45,12 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
         content: [
           {
             type: "text",
-            text:
-              issues
-                .map((issue: any) =>
-                  `Key: ${issue.key}\nSummary: ${issue.fields?.summary || ""}\nStatus: ${issue.fields?.status?.name || ""}\nAssignee: ${issue.fields?.assignee?.displayName || "Unassigned"}\nURL: ${config.baseUrl}/browse/${issue.key}\n`
-                )
-                .join("\n---\n")
+            text: `Search Result:
+            Size:${issues.length}
+            IsLastPage:${response.data.isLast}
+            NextPageToken:${response.data.nextPageToken || "N/A"}
+            Issues:
+            ${JSON.stringify(issues, null, 2)}`
           }
         ]
       };

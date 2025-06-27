@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { GetPageRequest, UpdatePageRequest } from "../../clients/confluenceClient.type";
+import type { GetPageRequest, UpdatePageRequest } from "../../types/confluenceClient.type";
 
 export function registerPageTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(

@@ -1,6 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
 import { AtlassianConfig } from './atlassianConfig';
-import type { CqlResult, CqlSearchParams, CreatePageRequest, GetPageRequest, Page, UpdatePageRequest } from './confluenceClient.type';
+import type { 
+  CqlResult,
+  CqlSearchParams,
+  CreatePageRequest,
+  GetPageRequest,
+  Page,
+  UpdatePageRequest
+} from '../types/confluenceClient.type';
 
 // Suppressing lint as Confluence API error handler param is defined as any
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -38,6 +45,7 @@ export class ConfluenceClient {
     );
   }
 
+  //#region Folder and Space Operations
   // Get a folder by ID
   async getFolder(folderId: number) {
     return this.axios.get(`/wiki/api/v2/folders/${folderId}`);
@@ -56,12 +64,16 @@ export class ConfluenceClient {
     if (keys !== undefined) params.keys = keys;
     return this.axios.get(`/wiki/api/v2/spaces`, { params });
   }
+  //#endregion
 
+  //#region Hierarchy Operations
   // List children of a page
   async getChildren(pageId: number) {
     return this.axios.get(`/wiki/api/v2/pages/${pageId}/children`);
   }
+  //#endregion
 
+  //#region Page Operations
   // Get a page by ID (with body, support for storage and markdown)
   async getPage(data: GetPageRequest) {
     return this.axios.get<Page>(`/wiki/api/v2/pages/${data.id}`, { data });
@@ -81,7 +93,9 @@ export class ConfluenceClient {
   async deletePage(pageId: number) {
     return this.axios.delete(`/wiki/api/v2/pages/${pageId}`);
   }
+  //#endregion
 
+  //#region CQL Operations
   // Advanced search using CQL
   async searchWithCql(cql: string, limit?: number, start?: number) {
     const params: CqlSearchParams = { cql };
@@ -89,4 +103,5 @@ export class ConfluenceClient {
     if (start !== undefined) params.start = start;
     return this.axios.get<CqlResult>(`/wiki/rest/api/content/search`, { params });
   }
+  //#endregion
 }

@@ -242,14 +242,41 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text:
-            'Key: JIRA-2\nSummary: Sum 2\nStatus: In Progress\nAssignee: Bob\nURL: https://example.atlassian.net/browse/JIRA-2\n' +
-            '\n---\n' +
-            'Key: JIRA-3\nSummary: Sum 3\nStatus: Done\nAssignee: Carol\nURL: https://example.atlassian.net/browse/JIRA-3\n'
+          text: `Search Result:
+            Size:2
+            IsLastPage:undefined
+            NextPageToken:N/A
+            Issues:
+            [
+  {
+    "key": "JIRA-2",
+    "fields": {
+      "summary": "Sum 2",
+      "status": {
+        "name": "In Progress"
+      },
+      "assignee": {
+        "displayName": "Bob"
+      }
+    }
+  },
+  {
+    "key": "JIRA-3",
+    "fields": {
+      "summary": "Sum 3",
+      "status": {
+        "name": "Done"
+      },
+      "assignee": {
+        "displayName": "Carol"
+      }
+    }
+  }
+]`
         }
       ]
     });
-    expect(mockSearchIssues).toHaveBeenCalledWith({ jql: 'project=TEST', maxResults: 2 });
+    expect(mockSearchIssues).toHaveBeenCalledWith({ jql: 'project=TEST', maxResults: 2, fields: ["summary", "status", "assignee", "description"] });
   });
 
   it('search-jira-issues handler handles missing fields in issues', async () => {
@@ -270,10 +297,23 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text:
-            'Key: JIRA-8\nSummary: \nStatus: \nAssignee: Unassigned\nURL: https://example.atlassian.net/browse/JIRA-8\n' +
-            '\n---\n' +
-            'Key: JIRA-9\nSummary: \nStatus: \nAssignee: Unassigned\nURL: https://example.atlassian.net/browse/JIRA-9\n'
+          text: `Search Result:
+            Size:2
+            IsLastPage:undefined
+            NextPageToken:N/A
+            Issues:
+            [
+  {
+    "key": "JIRA-8",
+    "fields": {}
+  },
+  {
+    "key": "JIRA-9",
+    "fields": {
+      "assignee": {}
+    }
+  }
+]`
         }
       ]
     });
@@ -290,7 +330,46 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text: 'No issues found.'
+          text: 'No issues found for the given JQL query.'
+        }
+      ]
+    });
+  });
+
+  it('search-jira-issues handler does not add extra fields when fields are explicitly provided', async () => {
+    const mockSearchIssues = jest.fn().mockResolvedValue({
+      data: {
+        issues: [
+          { key: 'JIRA-10', fields: { summary: 'Custom field test' } },
+        ],
+      },
+    });
+    MockedJiraClient.prototype.searchIssues = mockSearchIssues;
+    registerJiraTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'search-jira-issues');
+    const handler = call[3];
+    const result = await handler({ jql: 'project=TEST', fields: ['summary', 'priority'] }, {});
+    
+    // Verify that only the explicitly provided fields are passed, no defaults added
+    expect(mockSearchIssues).toHaveBeenCalledWith({ jql: 'project=TEST', fields: ['summary', 'priority'] });
+    
+    expect(result).toEqual({
+      content: [
+        {
+          type: 'text',
+          text: `Search Result:
+            Size:1
+            IsLastPage:undefined
+            NextPageToken:N/A
+            Issues:
+            [
+  {
+    "key": "JIRA-10",
+    "fields": {
+      "summary": "Custom field test"
+    }
+  }
+]`
         }
       ]
     });
@@ -398,7 +477,7 @@ describe('registerJiraTools', () => {
       content: [
         {
           type: 'text',
-          text: 'No issues found.'
+          text: 'No issues found for the given JQL query.'
         }
       ]
     });
