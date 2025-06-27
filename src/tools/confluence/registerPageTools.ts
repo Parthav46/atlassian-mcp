@@ -52,11 +52,9 @@ export function registerPageTools(server: McpServer, config: AtlassianConfig): v
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
-      const children = (response.data.results || []).map((child: unknown) => {
-        // Type assertion for expected child structure
-        const c = child as { title?: string; spaceId?: string; id?: string };
-        const url = `${config.baseUrl}/wiki/spaces/${c.spaceId}/pages/${c.id}`;
-        return `- ${c.title || "Untitled"}: ${url}`;
+      const children = (response.data.results || []).map((child: { title?: string; spaceId?: string; id?: string }) => {
+        const url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
+        return `- ${child.title || "Untitled"}: ${url}`;
       });
       return {
         content: [
