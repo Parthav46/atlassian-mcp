@@ -1,6 +1,6 @@
 {
   "name": "atlassian-mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "dist/src/index.js",
   "scripts": {
     "test": "jest --testPathIgnorePatterns=tests/integration",
@@ -10,8 +10,7 @@
     "build": "tsc",
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts",
-    "lint": "eslint .",
-    "prepare": "husky install"
+    "lint": "eslint ."
   },
   "keywords": [
     "mcp",
@@ -52,10 +51,5 @@
     "*.ts": [
       "eslint --fix"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   }
 }
