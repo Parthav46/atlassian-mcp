@@ -1,11 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
+import { AtlassianConfig } from './atlassianConfig';
+import type { CreateJiraIssueResponse, JiraIssueRequest, JqlResult, JqlSearchParams } from '../types/jiraClient.type';
 
-export interface JiraConfig {
-  baseUrl: string;
-  token: string;
-  username: string;
-}
-
+// Suppressing lint as Confluence API error handler param is defined as any
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function jiraErrorHandler(error: any) {
   if (error.response) {
     console.error('[Jira API Error]', {
@@ -22,7 +20,7 @@ export function jiraErrorHandler(error: any) {
 export class JiraClient {
   private axios: AxiosInstance;
 
-  constructor(config: JiraConfig) {
+  constructor(config: AtlassianConfig) {
     const authString = Buffer.from(`${config.username}:${config.token}`).toString('base64');
     this.axios = axios.create({
       baseURL: config.baseUrl,
@@ -41,37 +39,8 @@ export class JiraClient {
   }
 
   // Search Jira issues (JQL)
-  async searchIssues({
-    jql,
-    nextPageToken,
-    maxResults,
-    fields,
-    expand,
-    properties,
-    fieldsByKeys,
-    failFast,
-    reconcileIssues
-  }: {
-    jql: string;
-    nextPageToken?: string;
-    maxResults?: number;
-    fields?: string[];
-    expand?: string;
-    properties?: string[];
-    fieldsByKeys?: boolean;
-    failFast?: boolean;
-    reconcileIssues?: number[];
-  }) {
-    const params: Record<string, any> = { jql };
-    if (nextPageToken) params.nextPageToken = nextPageToken;
-    if (typeof maxResults === 'number') params.maxResults = maxResults;
-    if (fields && fields.length) params.fields = fields.join(',');
-    if (expand) params.expand = expand;
-    if (properties && properties.length) params.properties = properties.join(',');
-    if (typeof fieldsByKeys === 'boolean') params.fieldsByKeys = fieldsByKeys;
-    if (typeof failFast === 'boolean') params.failFast = failFast;
-    if (reconcileIssues && reconcileIssues.length) params.reconcileIssues = reconcileIssues.join(',');
-    return this.axios.get(`/rest/api/3/search/jql`, { params });
+  async searchIssues(data: JqlSearchParams) {
+    return this.axios.get<JqlResult>(`/rest/api/3/search/jql`, { data });
   }
 
   // Get a Jira issue by key
@@ -80,12 +49,12 @@ export class JiraClient {
   }
 
   // Create a Jira issue
-  async createIssue(issueData: any) {
-    return this.axios.post(`/rest/api/3/issue`, issueData);
+  async createIssue(issueData: JiraIssueRequest) {
+    return this.axios.post<CreateJiraIssueResponse>(`/rest/api/3/issue`, issueData);
   }
 
   // Update a Jira issue
-  async updateIssue(issueKey: string, issueData: any) {
+  async updateIssue(issueKey: string, issueData: JiraIssueRequest) {
     return this.axios.put(`/rest/api/3/issue/${issueKey}`, issueData);
   }
 

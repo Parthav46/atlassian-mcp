@@ -1,24 +1,30 @@
 import { registerPageTools } from '../../../src/tools/confluence/registerPageTools';
 import { ConfluenceClient } from '../../../src/clients/confluenceClient';
+import { AtlassianConfig } from '../../../src/clients/atlassianConfig';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerPageTools', () => {
-  let server: any;
-  let config: any;
+  let server: { tool: jest.Mock };
+  let config: AtlassianConfig;
 
   beforeEach(() => {
     server = { tool: jest.fn() };
-    config = { baseUrl: 'https://example.atlassian.net' };
+    config = {
+      baseUrl: 'https://example.atlassian.net',
+      token: 'dummy-token',
+      username: 'dummy-user'
+    };
     MockedConfluenceClient.mockClear();
   });
 
   it('registers all expected tools', () => {
-    registerPageTools(server, config);
+    registerPageTools(server as unknown as McpServer, config);
     // Should register 5 tools
     expect(server.tool).toHaveBeenCalledTimes(5);
-    const toolNames = server.tool.mock.calls.map((call: any[]) => call[0]);
+    const toolNames = server.tool.mock.calls.map((call: unknown[]) => call[0]);
     expect(toolNames).toEqual(
       expect.arrayContaining([
         'get-page',
@@ -39,8 +45,8 @@ describe('registerPageTools', () => {
       },
     });
     MockedConfluenceClient.prototype.getPage = mockGetPage;
-    registerPageTools(server, config);
-    const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const getPageCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-page');
     expect(getPageCall).toBeDefined();
     const handler = getPageCall[3];
     const result = await handler({ pageId: '123' }, {});
@@ -52,7 +58,7 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockGetPage).toHaveBeenCalledWith('123', 'storage');
+    expect(mockGetPage).toHaveBeenCalledWith({ id: '123', 'body-format': 'storage' });
   });
 
   it('get-page handler returns markdown content if bodyFormat is markdown', async () => {
@@ -64,8 +70,8 @@ describe('registerPageTools', () => {
       },
     });
     MockedConfluenceClient.prototype.getPage = mockGetPage;
-    registerPageTools(server, config);
-    const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const getPageCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-page');
     const handler = getPageCall[3];
     const result = await handler({ pageId: '123', bodyFormat: 'markdown' }, {});
     expect(result).toEqual({
@@ -76,7 +82,7 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockGetPage).toHaveBeenCalledWith('123', 'markdown');
+    expect(mockGetPage).toHaveBeenCalledWith({ id: '123', 'body-format': 'atlas_doc_format' });
   });
 
   it('get-page handler handles missing body gracefully', async () => {
@@ -88,8 +94,8 @@ describe('registerPageTools', () => {
       },
     });
     MockedConfluenceClient.prototype.getPage = mockGetPage;
-    registerPageTools(server, config);
-    const getPageCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const getPageCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-page');
     const handler = getPageCall[3];
     const resultStorage = await handler({ pageId: '124', bodyFormat: 'storage' }, {});
     expect(resultStorage).toEqual({
@@ -116,10 +122,10 @@ describe('registerPageTools', () => {
       data: { id: '123', title: 'Updated Title', status: 'current' },
     });
     MockedConfluenceClient.prototype.updatePage = mockUpdatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'update-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call) => call[0] === 'update-page');
     const handler = call[3];
-    const result = await handler({ pageId: '123', title: 'Updated Title', body: '<p>Updated</p>', version: 2 }, {});
+    const result = await handler({ pageId: 123, title: 'Updated Title', body: '<p>Updated</p>', version: 2 }, {});
     expect(result).toEqual({
       content: [
         {
@@ -128,7 +134,18 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockUpdatePage).toHaveBeenCalledWith('123', { title: 'Updated Title', body: '<p>Updated</p>', version: 2, status: undefined });
+    expect(mockUpdatePage).toHaveBeenCalledWith(123, {
+      id: '123',
+      title: 'Updated Title',
+      body: {
+        representation: 'storage',
+        value: '<p>Updated</p>'
+      },
+      version: {
+        number: 2
+      },
+      status: 'current'
+    });
   });
 
   it('get-children handler returns children', async () => {
@@ -139,8 +156,8 @@ describe('registerPageTools', () => {
       ] },
     });
     MockedConfluenceClient.prototype.getChildren = mockGetChildren;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-children');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-children');
     const handler = call[3];
     const result = await handler({ pageId: 'parent' }, {});
     expect(result).toEqual({
@@ -157,8 +174,8 @@ describe('registerPageTools', () => {
   it('get-children handler returns empty array if no children', async () => {
     const mockGetChildren = jest.fn().mockResolvedValue({ data: { results: [] } });
     MockedConfluenceClient.prototype.getChildren = mockGetChildren;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-children');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-children');
     const handler = call[3];
     const result = await handler({ pageId: 'parent' }, {});
     expect(result).toEqual({
@@ -176,15 +193,15 @@ describe('registerPageTools', () => {
       data: { results: [] },
     });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'create-page');
     const handler = call[3];
     const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
     expect(result).toEqual({
       content: [
         {
           type: 'text',
-          text: 'Space with key \"SPACE1\" not found.'
+          text: 'Space with key "SPACE1" not found.'
         }
       ]
     });
@@ -202,8 +219,8 @@ describe('registerPageTools', () => {
     });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
     MockedConfluenceClient.prototype.createPage = mockCreatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'create-page');
     const handler = call[3];
     const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
     expect(result).toEqual({
@@ -214,7 +231,12 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockCreatePage).toHaveBeenCalledWith(123, 'New Page', '<p>Body</p>', undefined);
+    expect(mockCreatePage).toHaveBeenCalledWith({
+      spaceId: '123',
+      title: 'New Page',
+      body: { representation: 'storage', value: '<p>Body</p>' },
+      parentId: undefined
+    });
   });
 
   it('create-page handler handles non-200/201 response gracefully', async () => {
@@ -227,8 +249,8 @@ describe('registerPageTools', () => {
     });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
     MockedConfluenceClient.prototype.createPage = mockCreatePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'create-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'create-page');
     const handler = call[3];
     const result = await handler({ spaceKey: 'SPACE1', title: 'New Page', body: '<p>Body</p>' }, {});
     expect(result).toEqual({
@@ -239,14 +261,19 @@ describe('registerPageTools', () => {
         }
       ]
     });
-    expect(mockCreatePage).toHaveBeenCalledWith(123, 'New Page', '<p>Body</p>', undefined);
+    expect(mockCreatePage).toHaveBeenCalledWith({
+      spaceId: '123',
+      title: 'New Page',
+      body: { representation: 'storage', value: '<p>Body</p>' },
+      parentId: undefined
+    });
   });
 
   it('delete-page handler returns expected data', async () => {
     const mockDeletePage = jest.fn().mockResolvedValue({});
     MockedConfluenceClient.prototype.deletePage = mockDeletePage;
-    registerPageTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'delete-page');
+    registerPageTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'delete-page');
     const handler = call[3];
     const result = await handler({ pageId: 'del1' }, {});
     expect(result).toEqual({

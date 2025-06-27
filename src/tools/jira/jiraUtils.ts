@@ -1,3 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// This file contains utility functions to parse Jira issue fields and descriptions. Suppressing errors for dynamic fields until the feature for ADF parsing is implemented.
+
+// #region ADF (Atlassian Document Format) Utilities
+// This file contains utility functions to parse ADF to Markdown or plain text and back.
+// Reference: https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/#atlassian-document-format
+
+export function parseADFToMarkdown(): string {
+  // Implement ADF to Markdown conversion logic here
+  return '';
+}
+
+//#endregion
+
 export function parseJiraDescription(description: any): string {
   if (!description) return '';
   if (typeof description === 'string') return description;

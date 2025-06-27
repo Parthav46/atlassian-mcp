@@ -48,8 +48,8 @@ describe('parseJiraDescription', () => {
 
 describe('parseJiraSubtasks', () => {
   it('returns empty string for non-array or empty', () => {
-    expect(parseJiraSubtasks(undefined as any)).toBe('');
-    expect(parseJiraSubtasks(null as any)).toBe('');
+    expect(parseJiraSubtasks(undefined as unknown as unknown[])).toBe('');
+    expect(parseJiraSubtasks(null as unknown as unknown[])).toBe('');
     expect(parseJiraSubtasks([])).toBe('');
   });
 

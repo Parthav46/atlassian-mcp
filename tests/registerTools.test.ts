@@ -1,4 +1,5 @@
 import { registerTools } from '../src/registerTools';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import * as pageTools from '../src/tools/confluence/registerPageTools';
 import * as spaceTools from '../src/tools/confluence/registerSpaceTools';
 import * as cqlTools from '../src/tools/confluence/registerCqlTools';
@@ -10,7 +11,7 @@ jest.mock('../src/tools/confluence/registerCqlTools');
 jest.mock('../src/tools/jira/registerJiraTools');
 
 describe('registerTools', () => {
-  const mockServer = {} as any;
+  const mockServer = {} as unknown as McpServer;
   const OLD_ENV = process.env;
 
   beforeEach(() => {

@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import type { GetPageRequest, UpdatePageRequest } from "../../types/confluenceClient.type";
 
-export function registerPageTools(server: McpServer, config: any) {
+export function registerPageTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "get-page",
     "Get a Confluence page by ID (optionally specify content format: storage or markdown)",
@@ -11,14 +13,17 @@ export function registerPageTools(server: McpServer, config: any) {
       bodyFormat: z.enum(["storage", "markdown"]).optional().describe("Content format: storage (default) or markdown")
     },
     async (
-      { pageId, bodyFormat }: { pageId: number; bodyFormat?: "storage" | "markdown" },
-      _extra: any
+      { pageId, bodyFormat }: { pageId: number; bodyFormat?: "storage" | "markdown" }
     ) => {
       const client = new ConfluenceClient(config);
       const format = bodyFormat || "storage";
-      const response = await client.getPage(pageId, format);
+      const data: GetPageRequest = {
+        id: pageId.toString(),
+        "body-format": format === "markdown" ? "atlas_doc_format" : "storage"
+      }
+      const response = await client.getPage(data);
       const page = response.data;
-      let url = page._links?.webui
+      const url = page._links?.webui
         ? `${config.baseUrl}/wiki${page._links.webui}`
         : 'No link available';
       let content = "";
@@ -43,13 +48,12 @@ export function registerPageTools(server: McpServer, config: any) {
     "Get children of a Confluence page by ID",
     { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: number },
-      _extra: any
+      { pageId }: { pageId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getChildren(pageId);
-      const children = (response.data.results || []).map((child: any) => {
-        let url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
+      const children = (response.data.results || []).map((child: { title?: string; spaceId?: string; id?: string }) => {
+        const url = `${config.baseUrl}/wiki/spaces/${child.spaceId}/pages/${child.id}`;
         return `- ${child.title || "Untitled"}: ${url}`;
       });
       return {
@@ -75,8 +79,7 @@ export function registerPageTools(server: McpServer, config: any) {
       parentId: z.number().optional().describe("Parent page ID")
     },
     async (
-      { spaceKey, title, body, parentId }: { spaceKey: string; title: string; body: string; parentId?: number },
-      _extra: any
+      { spaceKey, title, body, parentId }: { spaceKey: string; title: string; body: string; parentId?: number }
     ) => {
       const client = new ConfluenceClient(config);
       const spacesResponse = await client.listSpaces(undefined, 1, spaceKey);
@@ -92,7 +95,15 @@ export function registerPageTools(server: McpServer, config: any) {
         };
       }
 
-      const response = await client.createPage(spaceId, title, body, parentId);
+      const response = await client.createPage({
+        spaceId: spaceId.toString(),
+        title,
+        body: {
+          representation: "storage",
+          value: body
+        },
+        parentId: parentId ? parentId.toString() : undefined
+      });
       if (response.status !== 200 && response.status !== 201) {
         return {
           content: [
@@ -128,11 +139,22 @@ export function registerPageTools(server: McpServer, config: any) {
       status: z.string().optional().describe("Page status (default: current)")
     },
     async (
-      { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string },
-      _extra: any
+      { pageId, title, body, version, status }: { pageId: number; title: string; body: string; version: number; status?: string }
     ) => {
       const client = new ConfluenceClient(config);
-      const response = await client.updatePage(pageId, { title, body, version, status });
+      const data: UpdatePageRequest = {
+        id: pageId.toString(),
+        title,
+        body: {
+          representation: "storage",
+          value: body
+        },
+        version: {
+          number: version
+        },
+        status: status === "draft" ? "draft" : "current"
+      };
+      const response = await client.updatePage(pageId, data);
       const page = response.data;
       return {
         content: [
@@ -150,8 +172,7 @@ export function registerPageTools(server: McpServer, config: any) {
     "Delete a Confluence page by ID",
     { pageId: z.number().describe("Confluence page ID") },
     async (
-      { pageId }: { pageId: number },
-      _extra: any
+      { pageId }: { pageId: number }
     ) => {
       const client = new ConfluenceClient(config);
       await client.deletePage(pageId);

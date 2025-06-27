@@ -1,23 +1,29 @@
 import { registerSpaceTools } from '../../../src/tools/confluence/registerSpaceTools';
 import { ConfluenceClient } from '../../../src/clients/confluenceClient';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { AtlassianConfig } from '../../../src/clients/atlassianConfig';
 
 jest.mock('../../../src/clients/confluenceClient');
 const MockedConfluenceClient = ConfluenceClient as jest.MockedClass<typeof ConfluenceClient>;
 
 describe('registerSpaceTools', () => {
-  let server: any;
-  let config: any;
+  let server: { tool: jest.Mock };
+  let config: AtlassianConfig;
 
   beforeEach(() => {
     server = { tool: jest.fn() };
-    config = { baseUrl: 'https://example.atlassian.net' };
+    config = { 
+      baseUrl: 'https://example.atlassian.net',
+      token: 'test-token',
+      username: 'test-user',
+    };
     MockedConfluenceClient.mockClear();
   });
 
   it('registers all expected tools', () => {
-    registerSpaceTools(server, config);
+    registerSpaceTools(server as unknown as McpServer, config);
     expect(server.tool).toHaveBeenCalledTimes(3);
-    const toolNames = server.tool.mock.calls.map((call: any[]) => call[0]);
+    const toolNames = server.tool.mock.calls.map((call: unknown[]) => call[0]);
     expect(toolNames).toEqual(
       expect.arrayContaining([
         'get-folder',
@@ -38,8 +44,8 @@ describe('registerSpaceTools', () => {
       },
     });
     MockedConfluenceClient.prototype.getSpace = mockGetSpace;
-    registerSpaceTools(server, config);
-    const getSpaceCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-space');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const getSpaceCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-space');
     expect(getSpaceCall).toBeDefined();
     const handler = getSpaceCall[3];
     const result = await handler({ spaceId: 'S1' }, {});
@@ -65,8 +71,8 @@ describe('registerSpaceTools', () => {
       },
     });
     MockedConfluenceClient.prototype.getSpace = mockGetSpace;
-    registerSpaceTools(server, config);
-    const getSpaceCall = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-space');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const getSpaceCall = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-space');
     const handler = getSpaceCall[3];
     const result = await handler({ spaceId: 'S2' }, {});
     expect(result).toEqual({
@@ -124,8 +130,8 @@ describe('registerSpaceTools', () => {
       data: { id: 'F1', title: 'Folder 1', _links: { base: 'https://example.atlassian.net', webui: '/wiki/folders/F1' } },
     });
     MockedConfluenceClient.prototype.getFolder = mockGetFolder;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-folder');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-folder');
     const handler = call[3];
     const result = await handler({ folderId: 'F1' }, {});
     expect(result).toEqual({
@@ -144,8 +150,8 @@ describe('registerSpaceTools', () => {
       data: { id: 'F2', name: 'Folder 2' },
     });
     MockedConfluenceClient.prototype.getFolder = mockGetFolder;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'get-folder');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'get-folder');
     const handler = call[3];
     const result = await handler({ folderId: 'F2' }, {});
     expect(result).toEqual({
@@ -166,8 +172,8 @@ describe('registerSpaceTools', () => {
       ] },
     });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({ start: 0, limit: 2 }, {});
     expect(result).toEqual({
@@ -188,8 +194,8 @@ describe('registerSpaceTools', () => {
       ] },
     });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({ keys: 'S1' }, {});
     expect(result).toEqual({
@@ -206,8 +212,8 @@ describe('registerSpaceTools', () => {
   it('list-spaces handler returns empty array if no results', async () => {
     const mockListSpaces = jest.fn().mockResolvedValue({ data: { results: [] } });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({}, {});
     expect(result).toEqual({
@@ -223,8 +229,8 @@ describe('registerSpaceTools', () => {
   it('list-spaces handler handles undefined results', async () => {
     const mockListSpaces = jest.fn().mockResolvedValue({ data: {} });
     MockedConfluenceClient.prototype.listSpaces = mockListSpaces;
-    registerSpaceTools(server, config);
-    const call = server.tool.mock.calls.find((call: any[]) => call[0] === 'list-spaces');
+    registerSpaceTools(server as unknown as McpServer, config);
+    const call = server.tool.mock.calls.find((call: unknown[]) => call[0] === 'list-spaces');
     const handler = call[3];
     const result = await handler({}, {});
     expect(result).toEqual({

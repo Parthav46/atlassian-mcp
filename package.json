@@ -1,6 +1,6 @@
 {
   "name": "atlassian-mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "dist/src/index.js",
   "scripts": {
     "test": "jest --testPathIgnorePatterns=tests/integration",
@@ -39,8 +39,17 @@
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.0.1",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
     "jest": "^30.0.0",
+    "lint-staged": "^15.0.0",
     "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix"
+    ]
   }
 }

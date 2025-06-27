@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { ConfluenceClient } from "../../clients/confluenceClient";
+import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 
-export function registerSpaceTools(server: McpServer, config: any) {
+export function registerSpaceTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "get-folder",
     "Get a Confluence folder by ID",
     { folderId: z.number().describe("Confluence folder ID") },
     async (
-      { folderId }: { folderId: number },
-      _extra: any
+      { folderId }: { folderId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getFolder(folderId);
@@ -36,8 +36,7 @@ export function registerSpaceTools(server: McpServer, config: any) {
     "Get a Confluence space by ID",
     { spaceId: z.number().describe("Confluence space ID") },
     async (
-      { spaceId }: { spaceId: number },
-      _extra: any
+      { spaceId }: { spaceId: number }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.getSpace(spaceId);
@@ -66,8 +65,7 @@ export function registerSpaceTools(server: McpServer, config: any) {
       keys: z.string().optional().describe("Filter by key(s), comma-separated")
     },
     async (
-      { start, limit, keys }: { start?: number; limit?: number; keys?: string },
-      _extra: any
+      { start, limit, keys }: { start?: number; limit?: number; keys?: string }
     ) => {
       const client = new ConfluenceClient(config);
       const response = await client.listSpaces(start, limit, keys);
@@ -82,7 +80,7 @@ export function registerSpaceTools(server: McpServer, config: any) {
           ]
         };
       }
-      const lines = results.map((space: any) => `- ${space.name} (KEY: ${space.key}, ID: ${space.id}): ${config.baseUrl}/spaces/${space.key}`);
+      const lines = results.map((space) => `- ${space.name} (KEY: ${space.key}, ID: ${space.id}): ${config.baseUrl}/spaces/${space.key}`);
       return {
         content: [
           {
