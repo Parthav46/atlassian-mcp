@@ -5,6 +5,41 @@ import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
 
+// ADF validation schemas  
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADFMarkSchema = z.object({
+  type: z.string(),
+  attrs: z.record(z.unknown()).optional()
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADFNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
+  type: z.string(),
+  attrs: z.record(z.unknown()).optional(),
+  content: z.array(ADFNodeSchema).optional(),
+  marks: z.array(ADFMarkSchema).optional(),
+  text: z.string().optional()
+}));
+
+const ADFDocumentSchema = z.object({
+  version: z.literal(1),
+  type: z.literal('doc'),
+  content: z.array(ADFNodeSchema)
+});
+
+// Legacy ADF schema for backward compatibility
+const LegacyADFSchema = z.object({
+  type: z.string().describe("Content type (e.g., 'doc')"),
+  content: z.array(z.any()).optional().describe("ADF content array"),
+  version: z.number().optional().describe("ADF version")
+});
+
+// Union schema that accepts both new and legacy formats
+const DescriptionSchema = z.union([
+  ADFDocumentSchema.describe("ADF document with full type safety"),
+  LegacyADFSchema.describe("Legacy ADF format for backward compatibility")
+]).optional().describe("Issue description in ADF format");
+
 export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
     "search-jira-issues",
@@ -100,11 +135,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: z.object({
-            type: z.string().describe("Content type (e.g., 'doc')"),
-            content: z.array(z.any()).optional().describe("ADF content array"),
-            version: z.number().optional().describe("ADF version")
-          }).optional().describe("Issue description in ADF format"),
+          description: DescriptionSchema,
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),
@@ -145,11 +176,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: z.object({
-            type: z.string().describe("Content type (e.g., 'doc')"),
-            content: z.array(z.any()).optional().describe("ADF content array"),
-            version: z.number().optional().describe("ADF version")
-          }).optional().describe("Issue description in ADF format"),
+          description: DescriptionSchema,
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),

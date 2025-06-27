@@ -1,49 +1,66 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// This file contains utility functions to parse Jira issue fields and descriptions. Suppressing errors for dynamic fields until the feature for ADF parsing is implemented.
+import { ADFDocument, ADFNode } from '../../types/adf.types';
+import { adfToPlainText, adfToMarkdown, safeExtractText } from './adfUtils';
 
 // #region ADF (Atlassian Document Format) Utilities
 // This file contains utility functions to parse ADF to Markdown or plain text and back.
 // Reference: https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/#atlassian-document-format
 
-export function parseADFToMarkdown(): string {
-  // Implement ADF to Markdown conversion logic here
-  return '';
+/**
+ * Converts ADF document to Markdown format
+ * @param adf - ADF document or node to convert
+ * @returns Markdown string representation
+ */
+export function parseADFToMarkdown(adf: ADFDocument | ADFNode): string {
+  if (!adf) return '';
+  return adfToMarkdown(adf);
+}
+
+/**
+ * Converts ADF document to plain text
+ * @param adf - ADF document or node to convert
+ * @returns Plain text string representation
+ */
+export function parseADFToPlainText(adf: ADFDocument | ADFNode): string {
+  if (!adf) return '';
+  return adfToPlainText(adf);
 }
 
 //#endregion
 
-export function parseJiraDescription(description: any): string {
+/**
+ * Enhanced Jira description parser with proper ADF type support
+ * Maintains backward compatibility with legacy formats
+ */
+export function parseJiraDescription(description: unknown): string {
   if (!description) return '';
+  
+  // Handle plain string descriptions
   if (typeof description === 'string') return description;
-  if (description.type === 'doc' && Array.isArray(description.content)) {
-    const parseContent = (contentArr: any[]): string => {
-      return contentArr.map(block => {
-        if (block.type === 'paragraph' && Array.isArray(block.content)) {
-          return block.content.map((c: any) => c.text || '').join('');
-        }
-        if (block.type === 'orderedList' && Array.isArray(block.content)) {
-          return block.content.map((item: any, idx: number) => {
-            const text = item.content ? parseContent(item.content) : '';
-            return `${idx + 1}. ${text}`;
-          }).join('\n');
-        }
-        if (block.type === 'listItem' && Array.isArray(block.content)) {
-          return block.content.map((c: any) => parseContent([c])).join('');
-        }
-        return '';
-      }).join('\n');
-    };
-    return parseContent(description.content);
-  }
-  return '';
+  
+  // Use safe extraction for type-safe parsing
+  return safeExtractText(description);
 }
 
-export function parseJiraSubtasks(subtasks: any[]): string {
+/**
+ * Enhanced Jira subtasks parser with type safety
+ */
+export function parseJiraSubtasks(subtasks: unknown[]): string {
   if (!Array.isArray(subtasks) || subtasks.length === 0) return '';
+  
   return subtasks.map(sub => {
-    const summary = sub.fields?.summary || '';
-    const status = sub.fields?.status?.name || '';
-    const key = sub.key;
+    // Type-safe access to subtask properties
+    const subtask = sub as { 
+      key?: string; 
+      fields?: { 
+        summary?: string; 
+        status?: { name?: string } 
+      } 
+    };
+    
+    const summary = subtask.fields?.summary || '';
+    const status = subtask.fields?.status?.name || '';
+    const key = subtask.key || '';
+    
     return `- [${key}] ${summary} (${status})`;
   }).join('\n');
 }
