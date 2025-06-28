@@ -3,7 +3,29 @@ import { JiraClient } from "../../clients/jiraClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
+import type { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
+
+// ADF validation schemas  
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADFMarkSchema = z.object({
+  type: z.string(),
+  attrs: z.record(z.unknown()).optional()
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ADFNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
+  type: z.string(),
+  attrs: z.record(z.unknown()).optional(),
+  content: z.array(ADFNodeSchema).optional(),
+  marks: z.array(ADFMarkSchema).optional(),
+  text: z.string().optional()
+}));
+
+const ADFDocumentSchema = z.object({
+  version: z.literal(1),
+  type: z.literal('doc'),
+  content: z.array(ADFNodeSchema)
+});
 
 export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
@@ -100,11 +122,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: z.object({
-            type: z.string().describe("Content type (e.g., 'doc')"),
-            content: z.array(z.any()).optional().describe("ADF content array"),
-            version: z.number().optional().describe("ADF version")
-          }).optional().describe("Issue description in ADF format"),
+          description: ADFDocumentSchema.describe("Issue description in ADF format"),
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),
@@ -145,11 +163,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: z.object({
-            type: z.string().describe("Content type (e.g., 'doc')"),
-            content: z.array(z.any()).optional().describe("ADF content array"),
-            version: z.number().optional().describe("ADF version")
-          }).optional().describe("Issue description in ADF format"),
+          description: ADFDocumentSchema.describe("Issue description in ADF format"),
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),

@@ -24,7 +24,10 @@ export type JqlResult = {
   }>;
 };
 //#endregion
+
 //#region Jira Issue
+import type { ADFDocument, ADFNode } from './adf.types';
+
 export type JiraIssueRequest = {
   fields: {
     project: {
@@ -34,11 +37,9 @@ export type JiraIssueRequest = {
       key: string;
     };
     summary: string;
-    description?: {
+    description?: ADFDocument | {
       type: string; // e.g., "doc"
-      // Suppressing lint as content can be dynamic
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content?: any[]; // ADF content
+      content?: ADFNode[]; // ADF content with proper typing
       version?: number;
     };
     issuetype: {
