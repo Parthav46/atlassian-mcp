@@ -3,7 +3,7 @@ import { JiraClient } from "../../clients/jiraClient";
 import { AtlassianConfig } from "../../clients/atlassianConfig";
 import { parseJiraDescription, parseJiraSubtasks } from './jiraUtils';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
+import type { JiraIssueRequest, JqlSearchParams } from "../../types/jiraClient.type";
 
 // ADF validation schemas  
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,19 +26,6 @@ const ADFDocumentSchema = z.object({
   type: z.literal('doc'),
   content: z.array(ADFNodeSchema)
 });
-
-// Legacy ADF schema for backward compatibility
-const LegacyADFSchema = z.object({
-  type: z.string().describe("Content type (e.g., 'doc')"),
-  content: z.array(z.any()).optional().describe("ADF content array"),
-  version: z.number().optional().describe("ADF version")
-});
-
-// Union schema that accepts both new and legacy formats
-const DescriptionSchema = z.union([
-  ADFDocumentSchema.describe("ADF document with full type safety"),
-  LegacyADFSchema.describe("Legacy ADF format for backward compatibility")
-]).optional().describe("Issue description in ADF format");
 
 export function registerJiraTools(server: McpServer, config: AtlassianConfig): void {
   server.tool(
@@ -135,7 +122,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: DescriptionSchema,
+          description: ADFDocumentSchema.describe("Issue description in ADF format"),
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),
@@ -176,7 +163,7 @@ export function registerJiraTools(server: McpServer, config: AtlassianConfig): v
             key: z.string().describe("Parent issue key")
           }).optional(),
           summary: z.string().describe("Issue summary"),
-          description: DescriptionSchema,
+          description: ADFDocumentSchema.describe("Issue description in ADF format"),
           issuetype: z.object({
             id: z.string().describe("Issue type ID")
           }),

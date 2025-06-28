@@ -24,9 +24,10 @@ export type JqlResult = {
   }>;
 };
 //#endregion
-import { ADFDocument, ADFNode } from './adf.types';
 
 //#region Jira Issue
+import type { ADFDocument, ADFNode } from './adf.types';
+
 export type JiraIssueRequest = {
   fields: {
     project: {

@@ -11,6 +11,7 @@ import {
 } from '../../../src/tools/jira/adfUtils';
 import { 
   ADFDocument, 
+  ADFNode,
   isADFDocument, 
   isADFNode, 
   isADFTextNode, 
@@ -144,6 +145,291 @@ describe('ADF Conversion Functions', () => {
     expect(markdown).toContain('1. First item');
     expect(markdown).toContain('2. Second item');
   });
+
+  it('handles bullet lists in ADF conversion', () => {
+    const listADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: 'Bullet item' }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    const plainText = adfToPlainText(listADF);
+    expect(plainText).toContain('• Bullet item');
+
+    const markdown = adfToMarkdown(listADF);
+    expect(markdown).toContain('- Bullet item');
+  });
+
+  it('handles code blocks in ADF conversion', () => {
+    const codeADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'codeBlock',
+          attrs: { language: 'javascript' },
+          content: [
+            { type: 'text', text: 'console.log("hello");' }
+          ]
+        }
+      ]
+    };
+
+    const plainText = adfToPlainText(codeADF);
+    expect(plainText).toBe('console.log("hello");');
+
+    const markdown = adfToMarkdown(codeADF);
+    expect(markdown).toContain('```javascript\nconsole.log("hello");\n```');
+  });
+
+  it('handles code blocks without language attribute', () => {
+    const codeADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'codeBlock',
+          content: [
+            { type: 'text', text: 'some code' }
+          ]
+        }
+      ]
+    };
+
+    const markdown = adfToMarkdown(codeADF);
+    expect(markdown).toContain('```\nsome code\n```');
+  });
+
+  it('handles blockquotes in ADF conversion', () => {
+    const quoteADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'blockquote',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'This is a quote' }]
+            },
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'Second line' }]
+            }
+          ]
+        }
+      ]
+    };
+
+    const plainText = adfToPlainText(quoteADF);
+    expect(plainText).toContain('> This is a quote');
+    expect(plainText).toContain('> Second line');
+
+    const markdown = adfToMarkdown(quoteADF);
+    expect(markdown).toContain('> This is a quote');
+    expect(markdown).toContain('> Second line');
+  });
+
+  it('handles hard breaks in ADF conversion', () => {
+    const breakADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Line 1' },
+            { type: 'hardBreak' },
+            { type: 'text', text: 'Line 2' }
+          ]
+        }
+      ]
+    };
+
+    const plainText = adfToPlainText(breakADF);
+    expect(plainText).toBe('Line 1\nLine 2');
+
+    const markdown = adfToMarkdown(breakADF);
+    expect(markdown).toBe('Line 1  \nLine 2');
+  });
+
+  it('handles text marks in markdown conversion', () => {
+    const markedADF: ADFDocument = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { 
+              type: 'text', 
+              text: 'bold text',
+              marks: [{ type: 'strong' }]
+            },
+            { type: 'text', text: ' and ' },
+            { 
+              type: 'text', 
+              text: 'italic text',
+              marks: [{ type: 'em' }]
+            },
+            { type: 'text', text: ' and ' },
+            { 
+              type: 'text', 
+              text: 'code text',
+              marks: [{ type: 'code' }]
+            },
+            { type: 'text', text: ' and ' },
+            { 
+              type: 'text', 
+              text: 'strikethrough',
+              marks: [{ type: 'strike' }]
+            },
+            { type: 'text', text: ' and ' },
+            { 
+              type: 'text', 
+              text: 'link text',
+              marks: [{ type: 'link', attrs: { href: 'https://example.com' } }]
+            }
+          ]
+        }
+      ]
+    };
+
+    const markdown = adfToMarkdown(markedADF);
+    expect(markdown).toContain('**bold text**');
+    expect(markdown).toContain('*italic text*');
+    expect(markdown).toContain('`code text`');
+    expect(markdown).toContain('~~strikethrough~~');
+    expect(markdown).toContain('[link text](https://example.com)');
+  });
+
+  it('handles unknown node types gracefully', () => {
+    const unknownADF = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'unknownType',
+          content: [
+            { type: 'text', text: 'Some text' }
+          ]
+        }
+      ]
+    } as ADFDocument;
+
+    const plainText = adfToPlainText(unknownADF);
+    expect(plainText).toBe('Some text');
+
+    const markdown = adfToMarkdown(unknownADF);
+    expect(markdown).toBe('Some text');
+  });
+
+  it('handles nodes without content arrays', () => {
+    const noContentADF = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph'
+        }
+      ]
+    } as ADFDocument;
+
+    const plainText = adfToPlainText(noContentADF);
+    expect(plainText).toBe('');
+
+    const markdown = adfToMarkdown(noContentADF);
+    expect(markdown).toBe('');
+  });
+
+  it('handles empty or null input', () => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    expect(adfToPlainText(null as any)).toBe('');
+    expect(adfToPlainText(undefined as any)).toBe('');
+    expect(adfToMarkdown(null as any)).toBe('');
+    expect(adfToMarkdown(undefined as any)).toBe('');
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+  });
+
+  it('handles legacy doc format without version', () => {
+    const legacyDoc = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'Legacy content' }]
+        }
+      ]
+    } as ADFNode;
+
+    const plainText = adfToPlainText(legacyDoc);
+    expect(plainText).toBe('Legacy content');
+
+    const markdown = adfToMarkdown(legacyDoc);
+    expect(markdown).toBe('Legacy content');
+  });
+
+  it('handles heading without attrs', () => {
+    // This test verifies that headings without proper validation fail gracefully
+    const headingADF = {
+      version: 1,
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          content: [{ type: 'text', text: 'No level heading' }]
+        }
+      ]
+    } as ADFDocument;
+
+    // Without proper attrs, isADFHeading returns false, so text processing fails
+    const plainText = adfToPlainText(headingADF);
+    expect(plainText).toBe('');
+
+    const markdown = adfToMarkdown(headingADF);
+    expect(markdown).toBe('');
+  });
+
+  it('handles text node without isADFTextNode validation', () => {
+    const textNode = {
+      type: 'text'
+      // missing text property
+    } as ADFNode;
+
+    const plainText = adfToPlainText(textNode);
+    expect(plainText).toBe('');
+
+    const markdown = adfToMarkdown(textNode);
+    expect(markdown).toBe('');
+  });
+
+  it('handles paragraph node without isADFParagraph validation', () => {
+    const paragraphNode = {
+      type: 'paragraph'
+      // missing content property
+    } as ADFNode;
+
+    const plainText = adfToPlainText(paragraphNode);
+    expect(plainText).toBe('');
+
+    const markdown = adfToMarkdown(paragraphNode);
+    expect(markdown).toBe('');
+  });
 });
 
 describe('ADF Creation Functions', () => {
@@ -153,6 +439,45 @@ describe('ADF Creation Functions', () => {
     expect(adf.type).toBe('doc');
     expect(adf.content).toHaveLength(2);
     expect(adf.content[0].type).toBe('paragraph');
+  });
+
+  it('createSimpleADF handles empty string', () => {
+    const adf = createSimpleADF('');
+    expect(adf.version).toBe(1);
+    expect(adf.type).toBe('doc');
+    expect(adf.content).toHaveLength(0);
+  });
+
+  it('createSimpleADF handles null/undefined input', () => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const adf1 = createSimpleADF(null as any);
+    const adf2 = createSimpleADF(undefined as any);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+    
+    expect(adf1.version).toBe(1);
+    expect(adf1.type).toBe('doc');
+    expect(adf1.content).toHaveLength(0);
+    
+    expect(adf2.version).toBe(1);
+    expect(adf2.type).toBe('doc');
+    expect(adf2.content).toHaveLength(0);
+  });
+
+  it('createSimpleADF handles non-string input', () => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const adf = createSimpleADF(123 as any);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+    
+    expect(adf.version).toBe(1);
+    expect(adf.type).toBe('doc');
+    expect(adf.content).toHaveLength(0);
+  });
+
+  it('createSimpleADF filters out empty lines', () => {
+    const adf = createSimpleADF('Hello\n\n\nWorld\n  \n');
+    expect(adf.version).toBe(1);
+    expect(adf.type).toBe('doc');
+    expect(adf.content).toHaveLength(2);
   });
 
   it('createEmptyADF creates empty ADF document', () => {
@@ -181,6 +506,16 @@ describe('ADF Creation Functions', () => {
       text: 'My Heading'
     });
   });
+
+  it('createADFHeading uses default level when not specified', () => {
+    const heading = createADFHeading('Default Level');
+    expect(heading.type).toBe('heading');
+    expect(heading.attrs).toEqual({ level: 1 });
+    expect(heading.content?.[0]).toMatchObject({
+      type: 'text',
+      text: 'Default Level'
+    });
+  });
 });
 
 describe('ADF Utility Functions', () => {
@@ -190,6 +525,24 @@ describe('ADF Utility Functions', () => {
 
     const nonEmptyADF = createSimpleADF('Hello');
     expect(isEmptyADF(nonEmptyADF)).toBe(false);
+  });
+
+  it('isEmptyADF handles null/undefined input', () => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    expect(isEmptyADF(null as any)).toBe(true);
+    expect(isEmptyADF(undefined as any)).toBe(true);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+  });
+
+  it('isEmptyADF handles ADF with non-array content', () => {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const invalidADF = { version: 1, type: 'doc', content: 'not an array' } as any;
+    expect(isEmptyADF(invalidADF)).toBe(true);
+  });
+
+  it('isEmptyADF detects ADF with only whitespace', () => {
+    const whitespaceADF = createSimpleADF('   \n  \t  ');
+    expect(isEmptyADF(whitespaceADF)).toBe(true);
   });
 
   it('safeExtractText handles various input types safely', () => {
@@ -238,6 +591,74 @@ describe('ADF Utility Functions', () => {
     expect(result).toContain('First paragraph');
     expect(result).toContain('1. List item');
   });
+
+  it('safeExtractText handles individual paragraph nodes', () => {
+    const paragraphNode = {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Just a paragraph' }
+      ]
+    };
+
+    const result = safeExtractText(paragraphNode);
+    expect(result).toBe('Just a paragraph');
+  });
+
+  it('safeExtractText handles malformed paragraph nodes', () => {
+    const malformedParagraph = {
+      type: 'paragraph',
+      content: [
+        { type: 'text' }, // missing text property
+        { type: 'text', text: 'valid text' },
+        { type: 'nottext', text: 'wrong type' }
+      ]
+    };
+
+    const result = safeExtractText(malformedParagraph);
+    expect(result).toBe('valid text');
+  });
+
+  it('safeExtractText handles valid ADF nodes', () => {
+    const validNode: ADFNode = {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Valid node text' }
+      ]
+    };
+
+    const result = safeExtractText(validNode);
+    expect(result).toBe('Valid node text');
+  });
+
+  it('safeExtractText handles objects that are neither ADF documents nor nodes', () => {
+    const randomObject = {
+      someProperty: 'value',
+      anotherProperty: 123
+    };
+
+    const result = safeExtractText(randomObject);
+    expect(result).toBe('');
+  });
+
+  it('safeExtractText handles legacy doc with complex nested structures', () => {
+    const complexDoc = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Normal ' },
+            { type: 'nottext', invalid: 'data' }
+          ]
+        }
+      ]
+    };
+
+    const result = safeExtractText(complexDoc);
+    expect(result).toContain('Normal ');
+    expect(result).not.toContain('invalid');
+    expect(result).not.toContain('data');
+  });
 });
 
 describe('Error Handling', () => {
@@ -258,11 +679,50 @@ describe('Error Handling', () => {
   });
 
   it('handles circular references without infinite loops', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Create a simple test that will be caught by the error handler
+    // instead of actually creating circular references
+    const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
+    
+    // Force an error by calling with a structure that causes maximum call stack
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     const circular: any = { type: 'doc', content: [] };
     circular.content.push(circular);
 
     expect(() => safeExtractText(circular)).not.toThrow();
-    // Should not hang or crash
+    const result = safeExtractText(circular);
+    expect(typeof result).toBe('string');
+    
+    // Should have logged a warning about the error
+    expect(mockConsoleWarn).toHaveBeenCalledWith(
+      'Error extracting text from ADF object:',
+      expect.any(Error)
+    );
+    
+    mockConsoleWarn.mockRestore();
+  });
+
+  it('validateADFDocument handles invalid content types', () => {
+    const invalidDoc = {
+      version: 1,
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [] },
+        'invalid node', // string instead of object
+        { notType: 'missing type property' },
+        null
+      ]
+    };
+
+    expect(validateADFDocument(invalidDoc)).toBe(false);
+  });
+
+  it('validateADFDocument handles non-array content', () => {
+    const invalidDoc = {
+      version: 1,
+      type: 'doc',
+      content: 'not an array'
+    };
+
+    expect(validateADFDocument(invalidDoc)).toBe(false);
   });
 });
