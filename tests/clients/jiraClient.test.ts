@@ -24,10 +24,10 @@ describe('JiraClient', () => {
     expect(result.data.key).toBe('TEST-1');
   });
 
-  it('should call axios.get for searchIssues', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { issues: [] } });
+  it('should call axios.post for searchIssues', async () => {
+    mockedAxios.post.mockResolvedValue({ data: { issues: [] } });
     await client.searchIssues({ jql: 'project=TEST', maxResults: 10 });
-    expect(mockedAxios.get).toHaveBeenCalledWith('/rest/api/3/search/jql', { data: { jql: 'project=TEST', maxResults: 10 } });
+    expect(mockedAxios.post).toHaveBeenCalledWith('/rest/api/3/search/jql', { jql: 'project=TEST', maxResults: 10 });
   });
 
   it('should call axios.post for createIssue', async () => {
@@ -63,9 +63,9 @@ describe('JiraClient', () => {
   });
 
   it('should call searchIssues with only jql', async () => {
-    mockedAxios.get.mockResolvedValue({ data: { issues: [] } });
+    mockedAxios.post.mockResolvedValue({ data: { issues: [] } });
     await client.searchIssues({ jql: 'project=TEST' });
-    expect(mockedAxios.get).toHaveBeenCalledWith('/rest/api/3/search/jql', { data: { jql: 'project=TEST' } });
+    expect(mockedAxios.post).toHaveBeenCalledWith('/rest/api/3/search/jql', { jql: 'project=TEST' });
   });
 });
 

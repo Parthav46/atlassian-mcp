@@ -40,7 +40,7 @@ export class JiraClient {
 
   // Search Jira issues (JQL)
   async searchIssues(data: JqlSearchParams) {
-    return this.axios.get<JqlResult>(`/rest/api/3/search/jql`, { data });
+    return this.axios.post<JqlResult>(`/rest/api/3/search/jql`, data);
   }
 
   // Get a Jira issue by key
