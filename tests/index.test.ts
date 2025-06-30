@@ -12,6 +12,7 @@ jest.mock('@modelcontextprotocol/sdk/server/mcp', () => {
       resource: jest.fn(),
       prompt: jest.fn()
     })),
+    ResourceTemplate: jest.fn().mockImplementation(() => ({})),
   };
 });
 jest.mock('@modelcontextprotocol/sdk/server/stdio', () => {
